@@ -1,5 +1,5 @@
 import random
-
+from util import ContentGen
 
 class DataBase:
     def __init__(self, engine, name):
@@ -29,17 +29,10 @@ class DataBase:
 
 
 class Table:
-    text_options = [
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-        "In at mauris mattis, luctus purus ut, elementum nibh.",
-        "Nunc imperdiet quam ut enim sodales, non lobortis quam lacinia.",
-        "Donec eu risus pulvinar, luctus nisi vel, euismod turpis.",
-        "Ut ornare lacus vitae placerat placerat.",
-    ]
-
     def __init__(self, cursor, name):
         self.cursor = cursor
         self.name = name
+        self.content_gen = ContentGen()
 
     def fill(self, n=10):
         self.__populate_fields()
@@ -62,10 +55,9 @@ class Table:
         for field in self.fields:
             value = None
             if field["type"] == "integer":
-                value = random.randint(0, 99999)
+                value = self.content_gen.get_int(0, 9999)
             elif field["type"] == "text":
-                idx = random.randint(0, len(self.text_options) - 1)
-                value = self.text_options[idx]
+                value = self.content_gen.get_text(255)
 
             values[field["name"]] = value
 
