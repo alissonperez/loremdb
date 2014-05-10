@@ -3,6 +3,8 @@ from util import ContentGen
 
 
 class DataBase:
+    """Entity representing a database"""
+
     def __init__(self, engine, name):
         eng = __import__(engine)
         self.conn = eng.connect(name)
@@ -30,6 +32,8 @@ class DataBase:
 
 
 class Table:
+    """Database entity representing a collection of data"""
+
     def __init__(self, cursor, name):
         self.cursor = cursor
         self.name = name
@@ -45,6 +49,7 @@ class Table:
 
     def create_sql(self):
         field_names = [i["name"] for i in self.fields]
+
         return "INSERT INTO {0} VALUES ({1})".format(
             self.name,
             ", ".join([":{0}".format(i) for i in field_names])

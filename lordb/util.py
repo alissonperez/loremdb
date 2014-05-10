@@ -48,6 +48,8 @@ phrases = [
 
 
 class ContentGen:
+    """Content generator with 'Loren ipsum' texts and random numbers"""
+
     def get_text(self, max_len):
         phrase = self.get_in_list(phrases)
 
