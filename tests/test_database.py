@@ -3,16 +3,11 @@ from lordb.database import (DataBase, Table)
 import sqlite3
 
 
-class TestDataBase(unittest.TestCase):
+class DataBaseTestCase(unittest.TestCase):
     database_name = "/tmp/lordb-unittest-database"
-    num = 10
 
     def setUp(self):
         self.create_tables()
-        self.database = DataBase(
-            engine="sqlite3",
-            name=self.database_name
-        )
 
     def create_tables(self):
         self.conn = sqlite3.connect(self.database_name)
@@ -33,6 +28,17 @@ class TestDataBase(unittest.TestCase):
         )""")
 
         self.conn.commit()
+
+
+class TestDataBase(DataBaseTestCase):
+    num = 10
+
+    def setUp(self):
+        super(TestDataBase, self).setUp()
+        self.database = DataBase(
+            engine="sqlite3",
+            name=self.database_name
+        )
 
     def test_fill(self):
         c = self.conn.cursor()
@@ -60,23 +66,10 @@ class TestDataBase(unittest.TestCase):
         self.assertTrue("permissions" in tables)
 
 
-class TestTable(unittest.TestCase):
-    database_name = "/tmp/lordb-unittest-database"
-
+class TestTable(DataBaseTestCase):
     def setUp(self):
-        self.conn = sqlite3.connect(self.database_name)
-
-        self.create_tables()
+        super(TestTable, self).setUp()
         self.table = Table(self.conn, "users")
-
-    def create_tables(self):
-        c = self.conn.cursor()
-
-        c.execute("drop table if exists users")
-        c.execute("""create table if not exists
-        users (name text, age integer)""")
-
-        self.conn.commit()
 
     def test_fill(self):
         c = self.conn.cursor()

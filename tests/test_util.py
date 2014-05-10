@@ -18,6 +18,6 @@ class test_content_gen(unittest.TestCase):
             self.assertTrue(len(text) <= 50)
 
     def test_get_in_enum(self):
-        list = [ "foo" , "bar" , "baz" , "foobar" ]
+        list = ["foo", "bar", "baz", "foobar"]
         for i in xrange(100):
             self.assertIn(self.i.get_in_list(list), list)

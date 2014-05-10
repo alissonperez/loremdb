@@ -1,6 +1,7 @@
 import random
 from util import ContentGen
 
+
 class DataBase:
     def __init__(self, engine, name):
         eng = __import__(engine)
