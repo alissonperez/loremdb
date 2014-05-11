@@ -1,5 +1,6 @@
 import unittest
-from lordb.database import (DataBase, Table)
+from lordb.database.core import DataBaseCreator
+from lordb.database.sqlite import Table
 import sqlite3
 
 
@@ -35,8 +36,7 @@ class TestDataBase(DataBaseTestCase):
 
     def setUp(self):
         super(TestDataBase, self).setUp()
-        self.database = DataBase(
-            engine="sqlite3",
+        self.database = DataBaseCreator().create_sqlite(
             name=self.database_name
         )
 

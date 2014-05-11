@@ -1,7 +1,7 @@
 import random
 
 
-phrases = [
+_phrases = [
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
     "Pellentesque in diam cursus, convallis nisl quis, pulvinar sapien",
     "Donec id lacus nec leo ullamcorper auctor auctor eu elit",
@@ -51,7 +51,7 @@ class ContentGen:
     """Content generator with 'Loren ipsum' texts and random numbers"""
 
     def get_text(self, max_len):
-        phrase = self.get_in_list(phrases)
+        phrase = self.get_in_list(_phrases)
 
         if len(phrase) > max_len:
             return phrase[0:random.randint(1, max_len)]
