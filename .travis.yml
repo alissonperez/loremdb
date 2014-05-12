@@ -5,5 +5,9 @@ python:
 before_script:
   - mysql -u root < ./tests/mysql-provision.sql
 
+# command to install dependencies
+install:
+  - pip install -r ./tests/requirements.txt
+
 # command to run tests
 script: python setup.py test
