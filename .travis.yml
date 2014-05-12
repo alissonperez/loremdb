@@ -7,7 +7,7 @@ before_script:
 
 # command to install dependencies
 install:
-  - pip install -r ./tests/requirements.txt
+  - pip install --allow-external -r ./tests/requirements.txt
 
 # command to run tests
 script: python setup.py test
