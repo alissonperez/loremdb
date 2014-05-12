@@ -5,40 +5,45 @@ from lordb.util import ContentGen
 class DataBaseCreator:
     """Factory to create databases"""
 
-    def create_sqlite(self, name, engine="sqlite3"):
+    def create_sqlite(self, name, *arg, **kargs):
         from sqlite import DataBase as _DataBase
-        return _DataBase(engine, name)
+        return _DataBase(name, *arg, **kargs)
+
+    def create_mysql(self, user, password, database, *arg, **kargs):
+        from mysql import DataBase as _DataBase
+        return _DataBase(user, password, database, *arg, **kargs)
 
 
 class Table:
     """Abstract entity representing a collection of data"""
 
-    def __init__(self, cursor, name):
-        self.cursor = cursor
+    def __init__(self, database, name):
         self.name = name
-        self.content_gen = ContentGen()
 
-    def get_cursor(self):
-        return self.cursor
+        self._database = database
+        self._content_gen = ContentGen()
 
     def fill(self, n=10):
-        c = self.cursor
-        sql = self._create_sql()
+        c = self.get_cursor()
+
+        sql = self._create_insert_sql()
         for i in xrange(n):
+            params = self._get_random_params()
             c.execute(sql, self._get_random_params())
 
-    def _create_sql(self):
-        field_names = [i["name"] for i in self._get_fields()]
+        c.close()
 
-        return "INSERT INTO {0} VALUES ({1})".format(
-            self.name,
-            ", ".join([":{0}".format(i) for i in field_names])
-        )
+    def get_cursor(self):
+        return self._database.get_cursor()
 
-    def _get_random_params(self):
+    def _create_insert_sql(self):
+        """Creates an insert sql with 'wildcards'
+        to use with _get_random_params()."""
         return NotImplemented
 
-    def _get_fields(self):
+    def _get_random_params(self):
+        """Returns a row with random params to insert in the database.
+        Used with query returned in _create_insert_sql()"""
         return NotImplemented
 
 
@@ -47,26 +52,37 @@ class DataBase:
 
     _table_cls = Table
 
-    def __init__(self, engine, name):
-        eng = __import__(engine)
-        self.conn = eng.connect(name)
-
-    def fill(self, *args, **k_args):
-        c = self.conn.cursor()
+    def fill(self, *args, **kargs):
+        c = self.get_cursor()
 
         for table in self.get_tables():
-            self._table_cls(self.conn, table).fill(*args, **k_args)
+            self._table_cls(self, table).fill(*args, **kargs)
 
-        self.conn.commit()
+        self.commit()
+        c.close()
 
     def get_tables(self):
-        c = self.conn.cursor()
+        c = self.get_cursor()
         tables = []
 
-        for (name,) in c.execute(self.get_tables_name_sql()):
+        c.execute(self.get_tables_name_sql())
+        for (name,) in c:
             tables.append(name)
 
+        c.close()
+
         return tables
+
+    def get_cursor(self):
+        return self.get_conn().cursor()
+
+    def commit(self):
+        self.get_conn().commit()
+
+    def get_conn(self):
+        """Returns a connection object.
+        It is overridden by the subclasses"""
+        return NotImplemented
 
     def get_tables_name_sql(self):
         """Returns a query with table's name in the first column.
