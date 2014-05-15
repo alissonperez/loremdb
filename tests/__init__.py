@@ -21,4 +21,7 @@ class DiscoverTest(Command):
         test_suite = test_loader.discover(project_dir)
 
         test_runner = unittest.TextTestRunner()
-        return 1 if test_runner.run(test_suite).wasSuccessful() else 0
+        if not test_runner.run(test_suite).wasSuccessful():
+            raise SystemExit(1)
+        else:
+            return 0
