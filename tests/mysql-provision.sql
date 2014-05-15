@@ -1,4 +1,4 @@
-create database if not exists lordb ; use lordb ;
+create database if not exists lordb_test ; use lordb_test ;
 
 drop table if exists users ;
 create table users (

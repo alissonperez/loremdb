@@ -20,4 +20,5 @@ class DiscoverTest(Command):
         test_loader = unittest.defaultTestLoader
         test_suite = test_loader.discover(project_dir)
 
-        unittest.TextTestRunner().run(test_suite)
+        test_runner = unittest.TextTestRunner()
+        return 1 if test_runner.run(test_suite).wasSuccessful() else 0
