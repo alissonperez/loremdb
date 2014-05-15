@@ -1,4 +1,5 @@
 import random
+from datetime import date, timedelta, datetime
 
 
 _phrases = [
@@ -50,16 +51,54 @@ _phrases = [
 class ContentGen:
     """Content generator with 'Loren ipsum' texts and random numbers"""
 
+    # Default start date is two years ago.
+    _days_default_start_date = 365*2
+
+    # Default start datetime is seven days ago.
+    _days_default_start_datetime = 7
+
     def get_text(self, max_len):
         phrase = self.get_in_list(_phrases)
 
         if len(phrase) > max_len:
-            return phrase[0:random.randint(1, max_len)]
+            return phrase[0:self.get_int(1, max_len)]
 
         return phrase
 
     def get_in_list(self, list):
         return list[self.get_int(0, len(list)-1)]
+
+    def get_float(self, start, end):
+        return random.uniform(float(start), float(end))
+
+    def get_date(self, start=None, end=None):
+        if start is None:
+            start = self._get_default_start_date()
+
+        end = end if not end is None else date.today()
+
+        td_diff = end - start if start <= end else start - end
+        return start + timedelta(self.get_int(0, td_diff.days))
+
+    def _get_default_start_date(self):
+        return date.today() - timedelta(days=self._days_default_start_date)
+
+    def get_datetime(self, start=None, end=None):
+        if start is None:
+            start = self._get_default_start_datetime()
+
+        if end is None:
+            end = datetime.now()
+
+        td_diff = end - start if start <= end else start - end
+        return start + timedelta(
+            self.get_int(0, td_diff.days),
+            self.get_int(0, td_diff.seconds)
+        )
+
+    def _get_default_start_datetime(self):
+        return datetime.now()
+        - timedelta(days=self._days_default_start_datetime)
 
     def get_int(self, start, end):
         return random.randint(start, end)

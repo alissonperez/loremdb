@@ -5,13 +5,13 @@ from lordb.util import ContentGen
 class DataBaseCreator:
     """Factory to create databases"""
 
-    def create_sqlite(self, name, *arg, **kargs):
+    def create_sqlite(self, name, *args, **kargs):
         from sqlite import DataBase as _DataBase
-        return _DataBase(name, *arg, **kargs)
+        return _DataBase(name, *args, **kargs)
 
-    def create_mysql(self, user, password, database, *arg, **kargs):
+    def create_mysql(self, user, password, database, *args, **kargs):
         from mysql import DataBase as _DataBase
-        return _DataBase(user, password, database, *arg, **kargs)
+        return _DataBase(user, password, database, *args, **kargs)
 
 
 class Table:

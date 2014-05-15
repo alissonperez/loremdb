@@ -75,7 +75,6 @@ class DataBase(_DataBase):
 
     def get_tables_name_sql(self):
         """Returns a query with table's name in the first column"""
-        return """SELECT
-            table_name
+        return """SELECT table_name
             FROM information_schema.tables
             WHERE TABLE_SCHEMA = '{0}'""".format(self.database)
