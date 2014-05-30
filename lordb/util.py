@@ -75,7 +75,7 @@ class ContentGen:
         if start is None:
             start = self._get_default_start_date()
 
-        end = end if not end is None else date.today()
+        end = end if end is not None else date.today()
 
         td_diff = end - start if start <= end else start - end
         return start + timedelta(self.get_int(0, td_diff.days))

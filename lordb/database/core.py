@@ -2,7 +2,7 @@ import random
 from lordb.util import ContentGen
 
 
-class DataBaseCreator:
+class DataBaseCreator(object):
     """Factory to create databases"""
 
     def create_sqlite(self, name, *args, **kargs):
@@ -14,7 +14,7 @@ class DataBaseCreator:
         return _DataBase(user, password, database, *args, **kargs)
 
 
-class Table:
+class Table(object):
     """Abstract entity representing a collection of data"""
 
     def __init__(self, database, name):
@@ -42,12 +42,36 @@ class Table:
         return NotImplemented
 
     def _get_random_params(self):
-        """Returns a row with random params to insert in the database.
-        Used with query returned in _create_insert_sql()"""
+        """Returns a dictionary with field names as index and
+        its random values"""
+
+        values = {}
+        for field in self._get_fields():
+            values[field.get_name()] = field.get_random_value()
+
+        return values
+
+    def _get_fields(self):
+        """Returns fields in the Table
+        Used with query returned in _create_insert_sql() and
+        _get_random_params()"""
         return NotImplemented
 
 
-class DataBase:
+class Field(object):
+
+    def __init__(self, name):
+        self.name = name
+        self._content_gen = ContentGen()
+
+    def get_name(self):
+        return self.name
+
+    def get_random_value(self):
+        return NotImplemented
+
+
+class DataBase(object):
     """Abstract entity representing a database"""
 
     _table_cls = Table

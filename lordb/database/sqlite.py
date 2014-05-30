@@ -1,25 +1,10 @@
-from core import DataBase as _DataBase
-from core import Table as _Table
+import core
 
 
-class Table(_Table):
-
-    def _get_random_params(self):
-        values = {}
-
-        for field in self._get_fields():
-            value = None
-            if field["type"] == "integer":
-                value = self._content_gen.get_int(0, 9999)
-            elif field["type"] == "text":
-                value = self._content_gen.get_text(255)
-
-            values[field["name"]] = value
-
-        return values
+class Table(core.Table):
 
     def _create_insert_sql(self):
-        field_names = [i["name"] for i in self._get_fields()]
+        field_names = [i.get_name() for i in self._get_fields()]
 
         return "INSERT INTO {0} VALUES ({1})".format(
             self.name,
@@ -36,12 +21,38 @@ class Table(_Table):
 
         sql = "PRAGMA table_info({0})".format(self.name)
         for (num, name, f_type, _, _, _) in c.execute(sql):
-            self.__fields.append({"name": name, "type": f_type})
+            if f_type == "integer":
+                field = IntegerField(name, 0, 9999)
+            elif f_type == "text":
+                field = TextField(name, 255)
+            else:
+                raise Exception("Unexpected column type '{0}'".format(f_type))
+
+            self.__fields.append(field)
 
         return self.__fields
 
 
-class DataBase(_DataBase):
+class IntegerField(core.Field):
+    def __init__(self, name, min, max):
+        super(IntegerField, self).__init__(name)
+        self.min = min
+        self.max = max
+
+    def get_random_value(self):
+        return self._content_gen.get_int(self.min, self.max)
+
+
+class TextField(core.Field):
+    def __init__(self, name, length):
+        super(TextField, self).__init__(name)
+        self.length = length
+
+    def get_random_value(self):
+        return self._content_gen.get_text(self.length)
+
+
+class DataBase(core.DataBase):
     _table_cls = Table
 
     def __init__(self, name, engine="sqlite3"):

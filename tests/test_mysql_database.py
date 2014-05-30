@@ -1,6 +1,6 @@
 import unittest
 from lordb.database.core import DataBaseCreator
-from lordb.database.mysql import Table
+from lordb.database import mysql
 
 
 class DataBaseTestCase(unittest.TestCase):
@@ -54,7 +54,7 @@ class TestTable(DataBaseTestCase):
 
     def setUp(self):
         super(TestTable, self).setUp()
-        self.table = Table(self.database, "users")
+        self.table = mysql.Table(self.database, "users")
 
     def test_fill(self):
         c = self.table.get_cursor()
@@ -67,3 +67,9 @@ class TestTable(DataBaseTestCase):
 
         c.execute("SELECT name, age from users")
         self.assertEquals(10, len(c.fetchall()))
+
+
+class TestIntegerField(unittest.TestCase):
+
+    def test_get_content_gen(self):
+        f = mysql.IntegerField("age")
