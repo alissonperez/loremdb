@@ -5,23 +5,24 @@ from lordb.util import ContentGen
 class DataBaseCreator(object):
     """Factory to create databases"""
 
-    def create_sqlite(self, name, *args, **kargs):
+    def create_sqlite(
+            self, content_gen, name, *args, **kargs):
         from sqlite import DataBase as _DataBase
-        return _DataBase(name, *args, **kargs)
+        return _DataBase(content_gen, name, *args, **kargs)
 
-    def create_mysql(self, user, password, database, *args, **kargs):
+    def create_mysql(
+            self, content_gen, user, password, database, *args, **kargs):
         from mysql import DataBase as _DataBase
-        return _DataBase(user, password, database, *args, **kargs)
+        return _DataBase(content_gen, user, password, database, *args, **kargs)
 
 
 class Table(object):
     """Abstract entity representing a collection of data"""
 
-    def __init__(self, database, name):
+    def __init__(self, database, name, content_gen):
         self.name = name
-
         self._database = database
-        self._content_gen = ContentGen()
+        self._content_gen = content_gen
 
     def fill(self, n=10):
         c = self.get_cursor()
@@ -47,6 +48,7 @@ class Table(object):
 
         values = {}
         for field in self._get_fields():
+            field.content_gen = self._content_gen
             values[field.get_name()] = field.get_random_value()
 
         return values
@@ -59,10 +61,12 @@ class Table(object):
 
 
 class Field(object):
+    """Abstract entity representing a field in the Database"""
+
+    content_gen = None  # Instance of conntent generator
 
     def __init__(self, name):
         self.name = name
-        self._content_gen = ContentGen()
 
     def get_name(self):
         return self.name
@@ -76,11 +80,15 @@ class DataBase(object):
 
     _table_cls = Table
 
+    def __init__(self, content_gen):
+        self._content_gen = content_gen
+
     def fill(self, *args, **kargs):
         c = self.get_cursor()
 
         for table in self.get_tables():
-            self._table_cls(self, table).fill(*args, **kargs)
+            table = self._table_cls(self, table, self._content_gen)
+            table.fill(*args, **kargs)
 
         self.commit()
         c.close()

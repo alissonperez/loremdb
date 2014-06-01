@@ -1,6 +1,7 @@
 import unittest
 from lordb.database.core import DataBaseCreator
 from lordb.database.sqlite import Table
+from lordb.util import ContentGen
 import sqlite3
 
 
@@ -10,6 +11,7 @@ class SqliteDataBaseTestCase(unittest.TestCase):
     def setUp(self):
         self.create_tables()
         self._database = DataBaseCreator().create_sqlite(
+            content_gen=ContentGen(),
             name=self.database_name
         )
 
@@ -66,7 +68,7 @@ class TestDataBase(SqliteDataBaseTestCase):
 class TestTable(SqliteDataBaseTestCase):
     def setUp(self):
         super(TestTable, self).setUp()
-        self.table = Table(self._database, "users")
+        self.table = Table(self._database, "users", ContentGen())
 
     def test_fill(self):
         c = self._database.get_cursor()

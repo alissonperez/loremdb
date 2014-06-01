@@ -1,5 +1,6 @@
 import core
 from importlib import import_module
+import re
 
 
 class Table(core.Table):
@@ -47,9 +48,9 @@ class IntegerField(core.Field):
 
     def get_random_value(self):
         if self.unsigned:
-            return self._content_gen.get_int(0, self.num_signed_max * 2)
+            return self.content_gen.get_int(0, self.num_signed_max * 2)
 
-        return self._content_gen.get_int(
+        return self.content_gen.get_int(
             self.num_signed_max * -1, self.num_signed_max
         )
 
@@ -76,25 +77,65 @@ class IntField(IntegerField):
 
 class DateField(core.Field):
     def get_random_value(self):
-        return self._content_gen.get_date()
+        return self.content_gen.get_date()
 
 
 class DateTimeField(core.Field):
     def get_random_value(self):
-        return self._content_gen.get_datetime()
+        return self.content_gen.get_datetime()
 
 
 class TimestampField(core.Field):
     def get_random_value(self):
-        return 126144000 + self._content_gen.get_int(0, 315360000)
+        return 126144000 + self.content_gen.get_int(0, 315360000)
+
+
+class TimeField(core.Field):
+    def get_random_value(self):
+        return '{0}:{1}:{2}'.format(
+            self.content_gen.get_int(0, 23),
+            self.content_gen.get_int(0, 59),
+            self.content_gen.get_int(0, 59)
+        )
+
+
+class YearField(core.Field):
+    def get_random_value(self):
+        return self.content_gen.get_int(1990, 2020)
+
+
+class TextField(core.Field):
+    def __init__(self, name, length):
+        super(TextField, self).__init__(name)
+        self.length = length
+
+    def get_random_value(self):
+        return self.content_gen.get_text(self.length)
+
+
+class EnumField(core.Field):
+    def __init__(self, name, options=[]):
+        super(TextField, self).__init__(name)
+        self.options = options
+
+    def get_random_value(self):
+        return self.content_gen.get_in_list(self.options)
+
+    def parse(self, enum_str):
+        pass
+        # # enum('male','female')
+        # pat =
+        # if len(enum_str) < 5 | | enum_str[0:4] != "enum(":
+        #     raise Exception("Unexpected enum string: '{0}'".format(enum_str))
 
 
 class DataBase(core.DataBase):
     _table_cls = Table
 
     def __init__(
-            self, user, password, database,
+            self, content_gen, user, password, database,
             engine="mysql.connector", port="3306"):
+        super(DataBase, self).__init__(content_gen)
         self.user = user
         self.password = password
         self.database = database

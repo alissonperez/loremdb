@@ -1,6 +1,7 @@
 import unittest
 from lordb.database.core import DataBaseCreator
 from lordb.database import mysql
+from lordb.util import ContentGen
 
 
 class DataBaseTestCase(unittest.TestCase):
@@ -14,6 +15,7 @@ class DataBaseTestCase(unittest.TestCase):
 
     def get_database(self):
         return DataBaseCreator().create_mysql(
+            ContentGen(),
             user="root",
             password="",
             database="lordb_test"
@@ -54,7 +56,7 @@ class TestTable(DataBaseTestCase):
 
     def setUp(self):
         super(TestTable, self).setUp()
-        self.table = mysql.Table(self.database, "users")
+        self.table = mysql.Table(self.database, "users", ContentGen())
 
     def test_fill(self):
         c = self.table.get_cursor()

@@ -57,6 +57,12 @@ class ContentGen:
     # Default start datetime is seven days ago.
     _days_default_start_datetime = 7
 
+    def __init__(self, random_instance=None):
+        if random_instance is not None:
+            self._random = random_instance
+        else:
+            self._random = random
+
     def get_text(self, max_len):
         phrase = self.get_in_list(_phrases)
 
@@ -69,7 +75,7 @@ class ContentGen:
         return list[self.get_int(0, len(list)-1)]
 
     def get_float(self, start, end):
-        return random.uniform(float(start), float(end))
+        return self._random.uniform(float(start), float(end))
 
     def get_date(self, start=None, end=None):
         if start is None:
@@ -101,4 +107,4 @@ class ContentGen:
         - timedelta(days=self._days_default_start_datetime)
 
     def get_int(self, start, end):
-        return random.randint(start, end)
+        return self._random.randint(start, end)

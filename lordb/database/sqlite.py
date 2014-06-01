@@ -40,7 +40,7 @@ class IntegerField(core.Field):
         self.max = max
 
     def get_random_value(self):
-        return self._content_gen.get_int(self.min, self.max)
+        return self.content_gen.get_int(self.min, self.max)
 
 
 class TextField(core.Field):
@@ -49,22 +49,23 @@ class TextField(core.Field):
         self.length = length
 
     def get_random_value(self):
-        return self._content_gen.get_text(self.length)
+        return self.content_gen.get_text(self.length)
 
 
 class DataBase(core.DataBase):
     _table_cls = Table
 
-    def __init__(self, name, engine="sqlite3"):
-        self.name = name
+    def __init__(self, content_gen, name, engine="sqlite3"):
+        super(DataBase, self).__init__(content_gen)
         self._engine = engine
+        self._name = name
 
     def get_conn(self):
         if hasattr(self, '_conn'):
             return self._conn
 
         eng = __import__(self._engine)
-        self._conn = eng.connect(self.name)
+        self._conn = eng.connect(self._name)
         return self._conn
 
     def get_tables_name_sql(self):
