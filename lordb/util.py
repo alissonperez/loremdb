@@ -61,7 +61,7 @@ class ContentGen:
         if random_instance is not None:
             self._random = random_instance
         else:
-            self._random = random
+            self._random = random.Random()
 
     def get_text(self, max_len):
         phrase = self.get_in_list(_phrases)

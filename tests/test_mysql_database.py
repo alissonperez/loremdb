@@ -2,6 +2,9 @@ import unittest
 from lordb.database.core import DataBaseCreator
 from lordb.database import mysql
 from lordb.util import ContentGen
+from random import Random
+from abc import ABCMeta, abstractmethod
+from datetime import date, datetime
 
 
 class DataBaseTestCase(unittest.TestCase):
@@ -71,7 +74,158 @@ class TestTable(DataBaseTestCase):
         self.assertEquals(10, len(c.fetchall()))
 
 
-class TestIntegerField(unittest.TestCase):
+class BaseTestField(unittest.TestCase):
+    __metaclass__ = ABCMeta
+
+    def setUp(self):
+        self.field = self._create_field()
+
+        seed = "28391kaasd9129akdbb1o293"
+        rnd = Random()
+        rnd.seed(seed)
+        self.field.content_gen = ContentGen(rnd)
+
+    def _create_field(self):
+        return self.get_test_class()("generic_field")
+
+    @abstractmethod
+    def get_test_class(self):
+        return NotImplemented
+
+
+class TestIntegerField(BaseTestField):
+
+    def get_test_class(self):
+        return mysql.IntegerField
 
     def test_get_content_gen(self):
-        f = mysql.IntegerField("age")
+        self.assertEquals(1188699766, self.field.get_random_value())
+
+
+class TestTinyIntField(BaseTestField):
+
+    def get_test_class(self):
+        return mysql.TinyIntField
+
+    def test_get_content_gen(self):
+        self.assertEquals(71, self.field.get_random_value())
+
+
+class TestMediumIntField(BaseTestField):
+
+    def get_test_class(self):
+        return mysql.SmallIntField
+
+    def test_get_content_gen(self):
+        self.assertEquals(18138, self.field.get_random_value())
+
+
+class TestIntField(BaseTestField):
+
+    def get_test_class(self):
+        return mysql.IntField
+
+    def test_get_content_gen(self):
+        self.assertEquals(1188699766, self.field.get_random_value())
+
+
+class TestBigIntField(BaseTestField):
+
+    def get_test_class(self):
+        return mysql.BigIntField
+
+    def test_get_content_gen(self):
+        self.assertEquals(3741057809691319936, self.field.get_random_value())
+
+
+class TestDateField(BaseTestField):
+
+    def get_test_class(self):
+        return mysql.DateField
+
+    def test_get_content_gen(self):
+        self.assertEquals(date(2014, 1, 4), self.field.get_random_value())
+
+
+class TestDateTimeField(BaseTestField):
+
+    def get_test_class(self):
+        return mysql.DateTimeField
+
+    def test_get_content_gen(self):
+        dt = datetime(2014, 6, 16, 0, 18, 55, 319481)
+        result = self.field.get_random_value()
+
+        self.assertEquals(dt.year, result.year)
+        self.assertEquals(dt.month, result.month)
+        self.assertEquals(dt.day, result.day)
+        self.assertIn(result.hour, range(0, 24))
+        self.assertIn(result.minute, range(0, 60))
+        self.assertIn(result.second, range(0, 60))
+
+
+class TestTimestampField(BaseTestField):
+
+    def get_test_class(self):
+        return mysql.TimestampField
+
+    def test_get_content_gen(self):
+        self.assertEquals(371104841, self.field.get_random_value())
+
+
+class TestTimeField(BaseTestField):
+
+    def get_test_class(self):
+        return mysql.TimeField
+
+    def test_get_content_gen(self):
+        self.assertEquals("18:11:34", self.field.get_random_value())
+
+
+class TestYearField(BaseTestField):
+
+    def get_test_class(self):
+        return mysql.YearField
+
+    def test_get_content_gen(self):
+        self.assertEquals(2014, self.field.get_random_value())
+
+
+class TestTextField(BaseTestField):
+
+    def _create_field(self):
+        return self.get_test_class()("name", 55)
+
+    def get_test_class(self):
+        return mysql.TextField
+
+    def test_get_content_gen(self):
+        self.assertEquals(
+            "Integer ac quam vel erat tincidunt rhoncus ut ac elit",
+            self.field.get_random_value()
+        )
+
+
+class TestEnumField(BaseTestField):
+    database_spec = "enum('option1','secondOption','strange''option','test'',strage2')"
+
+    def _create_field(self):
+        return self.get_test_class()(
+            "enum_field",
+            mysql.EnumField.parse(self.database_spec)
+        )
+
+    def get_test_class(self):
+        return mysql.EnumField
+
+    def test_parse(self):
+        self.assertEquals(
+            [ "option1" , "secondOption" , "strange'option" , "test',strage2" ] ,
+            mysql.EnumField.parse(self.database_spec)
+        )
+
+    def test_get_content_gen(self):
+        self.assertEquals("test',strage2", self.field.get_random_value())
+
+
+

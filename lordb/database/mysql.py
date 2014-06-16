@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 import core
 from importlib import import_module
 import re
@@ -63,7 +65,7 @@ class SmallIntField(IntegerField):
     num_signed_max = 32767
 
 
-class SmallIntField(IntegerField):
+class MediumIntField(IntegerField):
     num_signed_max = 8388607
 
 
@@ -71,7 +73,7 @@ class IntField(IntegerField):
     pass
 
 
-class IntField(IntegerField):
+class BigIntField(IntegerField):
     num_signed_max = 9223372036854775807
 
 
@@ -115,18 +117,95 @@ class TextField(core.Field):
 
 class EnumField(core.Field):
     def __init__(self, name, options=[]):
-        super(TextField, self).__init__(name)
+        super(EnumField, self).__init__(name)
         self.options = options
 
     def get_random_value(self):
         return self.content_gen.get_in_list(self.options)
 
-    def parse(self, enum_str):
-        pass
+    # @todo - Improve this method (separate it in a another class), it is awful!
+    @classmethod
+    def parse(cls, enum_str):
         # # enum('male','female')
-        # pat =
-        # if len(enum_str) < 5 | | enum_str[0:4] != "enum(":
-        #     raise Exception("Unexpected enum string: '{0}'".format(enum_str))
+        m = re.search(r"^enum\((.*)\)$", enum_str)
+
+        if not m:
+            raise ValueError("Unespected 'enum' string: " + enum_str)
+
+        str_options = m.group(1)
+
+        # Grammar:
+        #   OPTION = QUOTE OPTION_VALUE QUOTE SEPARATOR | OPTION
+        #   OPTION_VALUE = PARTIAL_OPTION | QUOTE QUOTE | COMMA
+        #   SEPARATOR = COMMA | $
+        #   QUOTE = '''
+        #   PARTIAL_VALUE = '[^',]'
+        #   COMMA = ','
+
+        tokens = {
+            "QUOTE": r"^(')",
+            "COMMA": r"(\,)",
+            "PARTIAL_OPTION": r"^([^'\,]+)",
+        }
+
+        tokenized_options = []
+        i = 0
+
+        while (i<len(str_options)):
+            increment = None
+            for token, pattern in tokens.iteritems():
+                m = re.search(pattern, str_options[i:])
+                if m is not None:
+                    tokenized_options.append((token, m.group(1)))
+                    increment = len(m.group(0))
+                    break
+
+            if increment is None:
+                raise ValueError(
+                    "Unexpected value on parse enum options: \"{0}\"".format(str_options[i:])
+                )
+
+            i = i + increment
+
+        tokens_len = len(tokenized_options)
+        options = []
+        pos = 0
+        while pos < tokens_len:
+            token = tokenized_options[pos][0]
+
+            if token != "QUOTE":
+                raise ValueError("Unexpected token: " + token)
+
+            pos += 1
+
+            value = ""
+            while pos < tokens_len:
+                token = tokenized_options[pos][0]
+                val = tokenized_options[pos][1]
+
+                try:
+                    next_token = tokenized_options[pos+1][0]
+                except IndexError:
+                    next_token = None
+
+                if token == "PARTIAL_OPTION":
+                    value += val
+                elif token == "QUOTE" and ( next_token == "COMMA" or next_token is None ):
+                    pos += 2
+                    break
+                elif token == "QUOTE" and next_token == "QUOTE":
+                    value += val
+                    pos += 1
+                elif token == "COMMA":
+                    value += val
+                else:
+                    raise ValueError("Unexpected token: " + token)
+
+                pos += 1
+
+            options.append(value)
+
+        return options
 
 
 class DataBase(core.DataBase):
