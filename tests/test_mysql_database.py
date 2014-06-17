@@ -138,6 +138,24 @@ class TestBigIntField(BaseTestField):
         self.assertEquals(3741057809691319936, self.field.get_random_value())
 
 
+class TestDecimalField(BaseTestField):
+
+    def _create_field(self):
+        return self.get_test_class()("value", 5, 2)
+
+    def get_test_class(self):
+        return mysql.Decimalfield
+
+    def test_creation_with_precision_less_then_scale(self):
+        # Init method should raise an ValueError exception with
+        # precision (3) < scale (4)
+        self.assertRaises(ValueError, self.get_test_class(), "value", 3, 4)
+
+    def test_get_content_gen(self):
+        self.assertEquals(553.18, self.field.get_random_value())
+        self.assertEquals(138.8, self.field.get_random_value())
+
+
 class TestDateField(BaseTestField):
 
     def get_test_class(self):
@@ -208,7 +226,7 @@ class TestTextField(BaseTestField):
 
 class TestEnumField(BaseTestField):
     database_spec =\
-    "enum('option1','secondOption','strange''option','test'',strage2')"
+        "enum('option1','secondOption','strange''option','test'',strage2')"
 
     def _create_field(self):
         return self.get_test_class()(

@@ -75,6 +75,25 @@ class BigIntField(IntegerField):
     num_signed_max = 9223372036854775807
 
 
+class Decimalfield(core.Field):
+
+    def __init__(self, name, precision, scale=0, *args, **kargs):
+        super(Decimalfield, self).__init__(name, *args, **kargs)
+
+        if scale > precision:
+            raise ValueError("Value of 'precision' must be >= 'scale' value")
+
+        self.precision = precision
+        self.scale = scale
+
+    def get_random_value(self):
+        int_range = 10 ** (self.precision - self.scale) - 1
+        int_rand = self.content_gen.get_int(-1 * int_range, int_range)
+        decimal_range = 10 ** self.scale - 1
+        decimal_rand = self.content_gen.get_int(0, decimal_range)
+        return float("{0}.{1}".format(int_rand, decimal_rand))
+
+
 class DateField(core.Field):
     def get_random_value(self):
         return self.content_gen.get_date()
@@ -161,7 +180,7 @@ class EnumField(core.Field):
 
             if increment is None:
                 msg = "Unexpected value on parse enum options: \"{0}\""\
-                .format(str_options[i:])
+                    .format(str_options[i:])
 
                 raise ValueError(msg)
 
@@ -191,7 +210,7 @@ class EnumField(core.Field):
                 if token == "PARTIAL_OPTION":
                     value += val
                 elif token == "QUOTE"\
-                and (next_token == "COMMA" or next_token is None):
+                        and (next_token == "COMMA" or next_token is None):
                     pos += 2
                     break
                 elif token == "QUOTE" and next_token == "QUOTE":
