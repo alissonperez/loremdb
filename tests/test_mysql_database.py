@@ -144,7 +144,7 @@ class TestDateField(BaseTestField):
         return mysql.DateField
 
     def test_get_content_gen(self):
-        self.assertEquals(date(2014, 1, 4), self.field.get_random_value())
+        self.assertEquals(date(2010, 10, 14), self.field.get_random_value())
 
 
 class TestDateTimeField(BaseTestField):
@@ -153,15 +153,15 @@ class TestDateTimeField(BaseTestField):
         return mysql.DateTimeField
 
     def test_get_content_gen(self):
-        dt = datetime(2014, 6, 16, 0, 18, 55, 319481)
+        dt = datetime(2011, 3, 26, 0, 18, 55, 319481)
         result = self.field.get_random_value()
 
         self.assertEquals(dt.year, result.year)
         self.assertEquals(dt.month, result.month)
         self.assertEquals(dt.day, result.day)
         self.assertIn(result.hour, range(0, 24))
-        self.assertIn(result.minute, range(0, 60))
-        self.assertIn(result.second, range(0, 60))
+        self.assertIn(result.minute, range(0, 59))
+        self.assertIn(result.second, range(0, 59))
 
 
 class TestTimestampField(BaseTestField):
@@ -207,7 +207,8 @@ class TestTextField(BaseTestField):
 
 
 class TestEnumField(BaseTestField):
-    database_spec = "enum('option1','secondOption','strange''option','test'',strage2')"
+    database_spec =\
+    "enum('option1','secondOption','strange''option','test'',strage2')"
 
     def _create_field(self):
         return self.get_test_class()(
@@ -220,12 +221,9 @@ class TestEnumField(BaseTestField):
 
     def test_parse(self):
         self.assertEquals(
-            [ "option1" , "secondOption" , "strange'option" , "test',strage2" ] ,
+            ["option1", "secondOption", "strange'option", "test',strage2"],
             mysql.EnumField.parse(self.database_spec)
         )
 
     def test_get_content_gen(self):
         self.assertEquals("test',strage2", self.field.get_random_value())
-
-
-

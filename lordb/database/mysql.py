@@ -1,5 +1,3 @@
-# -*- coding: UTF-8 -*-
-
 import core
 from importlib import import_module
 import re
@@ -123,7 +121,8 @@ class EnumField(core.Field):
     def get_random_value(self):
         return self.content_gen.get_in_list(self.options)
 
-    # @todo - Improve this method (separate it in a another class), it is awful!
+    # @todo - Improve this method (separate it in a another class),
+    # it is awful!
     @classmethod
     def parse(cls, enum_str):
         # # enum('male','female')
@@ -151,7 +150,7 @@ class EnumField(core.Field):
         tokenized_options = []
         i = 0
 
-        while (i<len(str_options)):
+        while (i < len(str_options)):
             increment = None
             for token, pattern in tokens.iteritems():
                 m = re.search(pattern, str_options[i:])
@@ -161,9 +160,10 @@ class EnumField(core.Field):
                     break
 
             if increment is None:
-                raise ValueError(
-                    "Unexpected value on parse enum options: \"{0}\"".format(str_options[i:])
-                )
+                msg = "Unexpected value on parse enum options: \"{0}\""\
+                .format(str_options[i:])
+
+                raise ValueError(msg)
 
             i = i + increment
 
@@ -190,7 +190,8 @@ class EnumField(core.Field):
 
                 if token == "PARTIAL_OPTION":
                     value += val
-                elif token == "QUOTE" and ( next_token == "COMMA" or next_token is None ):
+                elif token == "QUOTE"\
+                and (next_token == "COMMA" or next_token is None):
                     pos += 2
                     break
                 elif token == "QUOTE" and next_token == "QUOTE":

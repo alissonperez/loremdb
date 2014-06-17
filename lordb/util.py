@@ -87,7 +87,7 @@ class ContentGen:
         return start + timedelta(self.get_int(0, td_diff.days))
 
     def _get_default_start_date(self):
-        return date.today() - timedelta(days=self._days_default_start_date)
+        return date(2000, 1, 1) - timedelta(days=self._days_default_start_date)
 
     def get_datetime(self, start=None, end=None):
         if start is None:
@@ -103,7 +103,7 @@ class ContentGen:
         )
 
     def _get_default_start_datetime(self):
-        return datetime.now()
+        return datetime(2000, 1, 1, 0, 0, 0)
         - timedelta(days=self._days_default_start_datetime)
 
     def get_int(self, start, end):
