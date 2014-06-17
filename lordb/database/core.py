@@ -1,5 +1,6 @@
 import random
 from lordb.util import ContentGen
+from abc import ABCMeta, abstractmethod
 
 
 class DataBaseCreator(object):
@@ -19,6 +20,8 @@ class DataBaseCreator(object):
 class Table(object):
     """Abstract entity representing a collection of data"""
 
+    __metaclass__ = ABCMeta
+
     def __init__(self, database, name, content_gen):
         self.name = name
         self._database = database
@@ -37,6 +40,7 @@ class Table(object):
     def get_cursor(self):
         return self._database.get_cursor()
 
+    @abstractmethod
     def _create_insert_sql(self):
         """Creates an insert sql with 'wildcards'
         to use with _get_random_params()."""
@@ -53,6 +57,7 @@ class Table(object):
 
         return values
 
+    @abstractmethod
     def _get_fields(self):
         """Returns fields in the Table
         Used with query returned in _create_insert_sql() and
@@ -63,6 +68,8 @@ class Table(object):
 class Field(object):
     """Abstract entity representing a field in the Database"""
 
+    __metaclass__ = ABCMeta
+
     content_gen = None  # Instance of conntent generator
 
     def __init__(self, name):
@@ -71,12 +78,15 @@ class Field(object):
     def get_name(self):
         return self.name
 
+    @abstractmethod
     def get_random_value(self):
         return NotImplemented
 
 
 class DataBase(object):
     """Abstract entity representing a database"""
+
+    __metaclass__ = ABCMeta
 
     _table_cls = Table
 
@@ -111,11 +121,13 @@ class DataBase(object):
     def commit(self):
         self.get_conn().commit()
 
+    @abstractmethod
     def get_conn(self):
         """Returns a connection object.
         It is overridden by the subclasses"""
         return NotImplemented
 
+    @abstractmethod
     def get_tables_name_sql(self):
         """Returns a query with table's name in the first column.
         It is overridden by the subclasses"""
