@@ -10,6 +10,7 @@ from datetime import date, datetime
 class DataBaseTestCase(unittest.TestCase):
     def setUp(self):
         self.database = self.get_database()
+        self.database.show_errors = False
         self.clean_tables()
 
     def tearDown(self):
@@ -58,6 +59,7 @@ class TestTable(DataBaseTestCase):
     def setUp(self):
         super(TestTable, self).setUp()
         self.table = mysql.Table(self.database, "users", ContentGen())
+        self.table.show_errors = False
 
     def test_fill(self):
         c = self.table.get_cursor()
@@ -73,7 +75,6 @@ class TestTable(DataBaseTestCase):
 
 
 class TestFieldCreatorFromMysql(unittest.TestCase):
-
     def setUp(self):
         self.creator = mysql.FieldCreatorFromMysql()
         self.default_row = {
@@ -82,13 +83,13 @@ class TestFieldCreatorFromMysql(unittest.TestCase):
             "table_name": "users",
             "column_name": "name",
             "ordinal_position": "2",
-            "column_default": "NULL",
+            "column_default": None,
             "is_nullable": "NO",
             "data_type": "varchar",
             "character_maximum_length": "100",
             "character_octet_length": "100",
-            "numeric_precision": "NULL",
-            "numeric_scale": "NULL",
+            "numeric_precision": None,
+            "numeric_scale": None,
             "character_set_name": "latin1",
             "collation_name": "latin1_swedish_ci",
             "column_type": "varchar(100)",
@@ -123,6 +124,7 @@ class TestFieldCreatorFromMysql(unittest.TestCase):
         self.assertEquals(mysql.EnumField, field.__class__)
         self.assertEquals("some_options", field.name)
         self.assertEquals(["a", "b", "c"], field.options)
+
 
 class BaseTestField(unittest.TestCase):
     __metaclass__ = ABCMeta
@@ -363,4 +365,4 @@ class TestSetField(BaseTestField):
     def test_get_content_gen(self):
         self.assertEquals("a,b',c", self.field.get_random_value())
         self.assertEquals("a,dd", self.field.get_random_value())
-        self.assertEquals("a,e", self.field.get_random_value())
+        self.assertEquals("e", self.field.get_random_value())

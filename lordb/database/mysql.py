@@ -57,13 +57,11 @@ class FieldCreatorFromMysql(object):
 
     def _sanitize_specs(self, specs):
         precision = None
-        if str(specs["numeric_precision"]).lower() != "null" \
-                and specs["numeric_precision"] is not None:
+        if specs["numeric_precision"] is not None:
             precision = int(specs["numeric_precision"])
 
         scale = None
-        if str(specs["numeric_scale"]).lower() != "null" \
-                and specs["numeric_scale"] is not None:
+        if specs["numeric_scale"] is not None:
             scale = int(specs["numeric_scale"])
 
         options = []

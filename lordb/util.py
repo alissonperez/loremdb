@@ -68,7 +68,7 @@ class ContentGen(object):
 
     def get_list_subset(self, list):
         options = []
-        for i in range(self.get_int(0, len(list))):
+        for i in range(self.get_int(1, len(list))):
             options.append(self.get_in_list(list))
 
         return set(options)

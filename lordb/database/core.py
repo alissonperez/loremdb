@@ -25,13 +25,18 @@ class Table(object):
         self.name = name
         self._database = database
         self._content_gen = content_gen
+        self.show_errors = False
 
     def fill(self, n=10):
         c = self.get_cursor()
 
         sql = self._create_insert_sql()
         for i in xrange(n):
-            c.execute(sql, self._get_random_params())
+            try:
+                c.execute(sql, self._get_random_params())
+            except Exception, e:
+                if self.show_errors:
+                    print "Exception: {0}".format(e)
 
         c.close()
 
@@ -88,12 +93,14 @@ class DataBase(object):
 
     def __init__(self, content_gen):
         self._content_gen = content_gen
+        self.show_errors = False
 
     def fill(self, *args, **kargs):
         c = self.get_cursor()
 
         for table in self.get_tables():
             table = self._table_cls(self, table, self._content_gen)
+            table.show_errors = self.show_errors
             table.fill(*args, **kargs)
 
         self.commit()
