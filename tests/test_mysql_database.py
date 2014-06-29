@@ -72,6 +72,58 @@ class TestTable(DataBaseTestCase):
         self.assertEquals(10, len(c.fetchall()))
 
 
+class TestFieldCreatorFromMysql(unittest.TestCase):
+
+    def setUp(self):
+        self.creator = mysql.FieldCreatorFromMysql()
+        self.default_row = {
+            "table_catalog": "def",
+            "table_schema": "lordb",
+            "table_name": "users",
+            "column_name": "name",
+            "ordinal_position": "2",
+            "column_default": "NULL",
+            "is_nullable": "NO",
+            "data_type": "varchar",
+            "character_maximum_length": "100",
+            "character_octet_length": "100",
+            "numeric_precision": "NULL",
+            "numeric_scale": "NULL",
+            "character_set_name": "latin1",
+            "collation_name": "latin1_swedish_ci",
+            "column_type": "varchar(100)",
+            "column_key": "",
+            "extra": "",
+            "privileges": "select,insert,update,references",
+            "column_comment": "",
+        }
+
+    def test_create_varchar_field(self):
+        field = self.creator.create(self.default_row)
+        self.assertEquals(mysql.VarcharField, field.__class__)
+        self.assertEquals("name", field.name)
+        self.assertEquals(100, field.length)
+
+    def test_create_integer_field(self):
+        self.default_row["column_name"] = "age"
+        self.default_row["data_type"] = "tinyint"
+        self.default_row["column_type"] = "tinyint(3) unsigned"
+
+        field = self.creator.create(self.default_row)
+        self.assertEquals(mysql.TinyintField, field.__class__)
+        self.assertEquals("age", field.name)
+        self.assertTrue(field.unsigned)
+
+    def test_create_enum_field(self):
+        self.default_row["column_name"] = "some_options"
+        self.default_row["data_type"] = "enum"
+        self.default_row["column_type"] = "enum('a','b','c')"
+
+        field = self.creator.create(self.default_row)
+        self.assertEquals(mysql.EnumField, field.__class__)
+        self.assertEquals("some_options", field.name)
+        self.assertEquals(["a", "b", "c"], field.options)
+
 class BaseTestField(unittest.TestCase):
     __metaclass__ = ABCMeta
 

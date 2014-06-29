@@ -9,7 +9,7 @@ class Table(core.Table):
         fields_num = len(self._get_fields())
         return "INSERT INTO {0} ({1}) VALUES ({2})".format(
             self.name,
-            ", ".join([i["name"] for i in self._get_fields()]),
+            ", ".join([i.name for i in self._get_fields()]),
             ", ".join(["%s" for i in range(fields_num)])
         )
 
@@ -20,22 +20,73 @@ class Table(core.Table):
         c = self.get_cursor()
 
         self.__fields = []
+        cols = [
+            "table_catalog", "numeric_precision",
+            "table_schema", "numeric_scale",
+            "table_name", "character_set_name",
+            "column_name", "collation_name",
+            "ordinal_position", "column_type",
+            "column_default", "column_key",
+            "is_nullable", "extra",
+            "data_type", "privileges",
+            "character_maximum_length", "column_comment",
+            "character_octet_length"
+        ]
 
-        sql = """SELECT
-            column_name, data_type
+        sql = """SELECT {0}
             FROM information_schema.columns
-            WHERE TABLE_SCHEMA = %s AND table_name = %s
-            ORDER BY ordinal_position"""
+            WHERE table_schema = %s and table_name = %s
+            ORDER BY ordinal_position""".format(",".join(cols))
 
         c.execute(sql, (self._database.database, self.name))
 
-        for (name, data_type) in c:
-            # @todo - Implement
-            pass
+        field_creator = FieldCreatorFromMysql()
+        for row in c:
+            self.__fields.append(field_creator.create(dict(zip(cols, row))))
 
         c.close()
 
         return self.__fields
+
+
+class FieldCreatorFromMysql(object):
+    def create(self, mysql_specs):
+        field_class = self._get_field_class(mysql_specs["data_type"])
+        specs = self._sanitize_specs(mysql_specs)
+        return field_class(**specs)
+
+    def _sanitize_specs(self, specs):
+        precision = None
+        if str(specs["numeric_precision"]).lower() != "null" \
+                and specs["numeric_precision"] is not None:
+            precision = int(specs["numeric_precision"])
+
+        scale = None
+        if str(specs["numeric_scale"]).lower() != "null" \
+                and specs["numeric_scale"] is not None:
+            scale = int(specs["numeric_scale"])
+
+        options = []
+        if specs["data_type"].lower() in ["enum", "set"]:
+            field_class = self._get_field_class(specs["data_type"])
+            options = field_class.parse(specs["column_type"])
+
+        length = None
+        if specs["character_maximum_length"] is not None:
+            length = int(specs["character_maximum_length"])
+
+        return {
+            "name": specs["column_name"],
+            "length": length,
+            "unsigned": "unsigned" in specs["column_type"],
+            "precision": precision,
+            "scale": scale,
+            "options": options,
+        }
+
+    def _get_field_class(self, data_type):
+        class_name = "{0}Field".format(data_type.capitalize())
+        return eval(class_name)
 
 
 class IntegerField(core.Field):
@@ -76,7 +127,6 @@ class BigintField(IntegerField):
 
 
 class DecimalField(core.Field):
-
     def __init__(self, name, precision, scale=0, *args, **kargs):
         super(DecimalField, self).__init__(name, *args, **kargs)
 
@@ -141,8 +191,8 @@ class YearField(core.Field):
 
 
 class CharField(core.Field):
-    def __init__(self, name, length):
-        super(CharField, self).__init__(name)
+    def __init__(self, name, length, *args, **kargs):
+        super(CharField, self).__init__(name, *args, **kargs)
         self.length = length
 
     def get_random_value(self):
@@ -166,8 +216,8 @@ class TextField(CharField):
 
 
 class EnumField(core.Field):
-    def __init__(self, name, options=[]):
-        super(EnumField, self).__init__(name)
+    def __init__(self, name, options=[], *args, **kargs):
+        super(EnumField, self).__init__(name, *args, **kargs)
         self.options = options
 
     def get_random_value(self):
@@ -175,7 +225,6 @@ class EnumField(core.Field):
 
     @classmethod
     def parse(cls, enum_str):
-        # # enum('male','female')
         m = re.search(cls.get_spec_regex(), enum_str)
 
         if not m:

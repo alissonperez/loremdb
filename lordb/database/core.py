@@ -19,7 +19,6 @@ class DataBaseCreator(object):
 
 class Table(object):
     """Abstract entity representing a collection of data"""
-
     __metaclass__ = ABCMeta
 
     def __init__(self, database, name, content_gen):
@@ -32,7 +31,6 @@ class Table(object):
 
         sql = self._create_insert_sql()
         for i in xrange(n):
-            params = self._get_random_params()
             c.execute(sql, self._get_random_params())
 
         c.close()
@@ -50,10 +48,10 @@ class Table(object):
         """Returns a dictionary with field names as index and
         its random values"""
 
-        values = {}
+        values = []
         for field in self._get_fields():
             field.content_gen = self._content_gen
-            values[field.get_name()] = field.get_random_value()
+            values.append(field.get_random_value())
 
         return values
 
@@ -72,7 +70,7 @@ class Field(object):
 
     content_gen = None  # Instance of conntent generator
 
-    def __init__(self, name):
+    def __init__(self, name, *args, **kargs):
         self.name = name
 
     def get_name(self):
@@ -85,9 +83,7 @@ class Field(object):
 
 class DataBase(object):
     """Abstract entity representing a database"""
-
     __metaclass__ = ABCMeta
-
     _table_cls = Table
 
     def __init__(self, content_gen):
