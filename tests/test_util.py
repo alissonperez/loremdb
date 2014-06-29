@@ -1,12 +1,12 @@
 import unittest
-from lordb.util import ContentGen
+import lordb.util
 from datetime import date, datetime
 
 
 class test_content_gen(unittest.TestCase):
 
     def setUp(self):
-        self.i = ContentGen()
+        self.i = lordb.util.ContentGen()
 
     def test_get_int(self):
         for i in xrange(100):
@@ -58,7 +58,63 @@ class test_content_gen(unittest.TestCase):
             self.assertTrue(start <= rand_datetime)
             self.assertTrue(rand_datetime <= end)
 
-    def test_get_in_enum(self):
+    def test_get_in_list(self):
         list = ["foo", "bar", "baz", "foobar"]
         for i in xrange(100):
             self.assertIn(self.i.get_in_list(list), list)
+
+    def test_get_list_subset(self):
+        options = ["foo", "bar", "baz", "foobar"]
+        for i in self.i.get_list_subset(options):
+            self.assertIn(i, options)
+
+
+class testOptionsParser(unittest.TestCase):
+
+    def setUp(self):
+        self.parser = lordb.util.OptionsParser()
+
+    def test_parser(self):
+        self.assertEquals(
+            ["a", "b"], self.parser.parse("'a','b'").options
+        )
+
+        self.assertEquals(
+            ["a", "b", "c"], self.parser.parse("'a','b','c'").options
+        )
+
+        self.assertEquals(
+            ["a"], self.parser.parse("'a'").options
+        )
+
+    def test_parser_with_an_option_with_quotes(self):
+        self.assertEquals(
+            ["a'b"], self.parser.parse("'a''b'").options
+        )
+
+        self.assertEquals(
+            ["a'b", "C"], self.parser.parse("'a''b','C'").options
+        )
+
+    def test_parser_with_empty_str(self):
+        self.assertEquals([], self.parser.parse("").options)
+
+    def test_parser_with_quote(self):
+        options_str = "'option1','secOpt','strange''option','test'',strage2'"
+        self.assertEquals(
+            ["option1", "secOpt", "strange'option", "test',strage2"],
+            self.parser.parse(options_str).options
+        )
+
+        self.assertEquals(
+            ["a", "b", "c'"],
+            self.parser.parse("'a','b','c'''").options
+        )
+
+        self.assertEquals(
+            ["a", "b',", "c'"],
+            self.parser.parse("'a','b'',','c'''").options
+        )
+
+    def test_parser_with_wrong_quote(self):
+        self.assertRaises(ValueError, self.parser.parse, "'a','b")

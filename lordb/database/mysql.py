@@ -1,10 +1,10 @@
 import core
 from importlib import import_module
+from lordb.util import OptionsParser
 import re
 
 
 class Table(core.Table):
-
     def _create_insert_sql(self):
         fields_num = len(self._get_fields())
         return "INSERT INTO {0} ({1}) VALUES ({2})".format(
@@ -55,15 +55,15 @@ class IntegerField(core.Field):
         )
 
 
-class TinyIntField(IntegerField):
+class TinyintField(IntegerField):
     num_signed_max = 127
 
 
-class SmallIntField(IntegerField):
+class SmallintField(IntegerField):
     num_signed_max = 32767
 
 
-class MediumIntField(IntegerField):
+class MediumintField(IntegerField):
     num_signed_max = 8388607
 
 
@@ -71,14 +71,14 @@ class IntField(IntegerField):
     pass
 
 
-class BigIntField(IntegerField):
+class BigintField(IntegerField):
     num_signed_max = 9223372036854775807
 
 
-class Decimalfield(core.Field):
+class DecimalField(core.Field):
 
     def __init__(self, name, precision, scale=0, *args, **kargs):
-        super(Decimalfield, self).__init__(name, *args, **kargs)
+        super(DecimalField, self).__init__(name, *args, **kargs)
 
         if scale > precision:
             raise ValueError("Value of 'precision' must be >= 'scale' value")
@@ -94,12 +94,29 @@ class Decimalfield(core.Field):
         return float("{0}.{1}".format(int_rand, decimal_rand))
 
 
+class FloatField(DecimalField):
+    pass
+
+
+class RealField(DecimalField):
+    pass
+
+
+class DoubleField(DecimalField):
+    pass
+
+
+class NumericField(DecimalField):
+    "In MySQL, NUMERIC is implemented as DECIMAL..."
+    pass
+
+
 class DateField(core.Field):
     def get_random_value(self):
         return self.content_gen.get_date()
 
 
-class DateTimeField(core.Field):
+class DatetimeField(core.Field):
     def get_random_value(self):
         return self.content_gen.get_datetime()
 
@@ -123,13 +140,29 @@ class YearField(core.Field):
         return self.content_gen.get_int(1990, 2020)
 
 
-class TextField(core.Field):
+class CharField(core.Field):
     def __init__(self, name, length):
-        super(TextField, self).__init__(name)
+        super(CharField, self).__init__(name)
         self.length = length
 
     def get_random_value(self):
         return self.content_gen.get_text(self.length)
+
+
+class VarcharField(CharField):
+    pass
+
+
+class BinaryField(CharField):
+    pass
+
+
+class VarbinaryField(CharField):
+    pass
+
+
+class TextField(CharField):
+    pass
 
 
 class EnumField(core.Field):
@@ -140,92 +173,30 @@ class EnumField(core.Field):
     def get_random_value(self):
         return self.content_gen.get_in_list(self.options)
 
-    # @todo - Improve this method (separate it in a another class),
-    # it is awful!
     @classmethod
     def parse(cls, enum_str):
         # # enum('male','female')
-        m = re.search(r"^enum\((.*)\)$", enum_str)
+        m = re.search(cls.get_spec_regex(), enum_str)
 
         if not m:
-            raise ValueError("Unespected 'enum' string: " + enum_str)
+            raise ValueError("Unespected field specification: " + enum_str)
 
         str_options = m.group(1)
+        return OptionsParser().parse(str_options).options
 
-        # Grammar:
-        #   OPTION = QUOTE OPTION_VALUE QUOTE SEPARATOR | OPTION
-        #   OPTION_VALUE = PARTIAL_OPTION | QUOTE QUOTE | COMMA
-        #   SEPARATOR = COMMA | $
-        #   QUOTE = '''
-        #   PARTIAL_VALUE = '[^',]'
-        #   COMMA = ','
+    @classmethod
+    def get_spec_regex(cls):
+        return r"^enum\((.*)\)$"
 
-        tokens = {
-            "QUOTE": r"^(')",
-            "COMMA": r"(\,)",
-            "PARTIAL_OPTION": r"^([^'\,]+)",
-        }
 
-        tokenized_options = []
-        i = 0
+class SetField(EnumField):
+    def get_random_value(self):
+        options = self.content_gen.get_list_subset(self.options)
+        return ",".join(sorted(options))
 
-        while (i < len(str_options)):
-            increment = None
-            for token, pattern in tokens.iteritems():
-                m = re.search(pattern, str_options[i:])
-                if m is not None:
-                    tokenized_options.append((token, m.group(1)))
-                    increment = len(m.group(0))
-                    break
-
-            if increment is None:
-                msg = "Unexpected value on parse enum options: \"{0}\""\
-                    .format(str_options[i:])
-
-                raise ValueError(msg)
-
-            i = i + increment
-
-        tokens_len = len(tokenized_options)
-        options = []
-        pos = 0
-        while pos < tokens_len:
-            token = tokenized_options[pos][0]
-
-            if token != "QUOTE":
-                raise ValueError("Unexpected token: " + token)
-
-            pos += 1
-
-            value = ""
-            while pos < tokens_len:
-                token = tokenized_options[pos][0]
-                val = tokenized_options[pos][1]
-
-                try:
-                    next_token = tokenized_options[pos+1][0]
-                except IndexError:
-                    next_token = None
-
-                if token == "PARTIAL_OPTION":
-                    value += val
-                elif token == "QUOTE"\
-                        and (next_token == "COMMA" or next_token is None):
-                    pos += 2
-                    break
-                elif token == "QUOTE" and next_token == "QUOTE":
-                    value += val
-                    pos += 1
-                elif token == "COMMA":
-                    value += val
-                else:
-                    raise ValueError("Unexpected token: " + token)
-
-                pos += 1
-
-            options.append(value)
-
-        return options
+    @classmethod
+    def get_spec_regex(self):
+        return r"^set\((.*)\)$"
 
 
 class DataBase(core.DataBase):

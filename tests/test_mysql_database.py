@@ -8,7 +8,6 @@ from datetime import date, datetime
 
 
 class DataBaseTestCase(unittest.TestCase):
-
     def setUp(self):
         self.database = self.get_database()
         self.clean_tables()
@@ -56,7 +55,6 @@ class TestDataBase(DataBaseTestCase):
 
 
 class TestTable(DataBaseTestCase):
-
     def setUp(self):
         super(TestTable, self).setUp()
         self.table = mysql.Table(self.database, "users", ContentGen())
@@ -94,7 +92,6 @@ class BaseTestField(unittest.TestCase):
 
 
 class TestIntegerField(BaseTestField):
-
     def get_test_class(self):
         return mysql.IntegerField
 
@@ -102,26 +99,31 @@ class TestIntegerField(BaseTestField):
         self.assertEquals(1188699766, self.field.get_random_value())
 
 
-class TestTinyIntField(BaseTestField):
-
+class TestTinyintField(BaseTestField):
     def get_test_class(self):
-        return mysql.TinyIntField
+        return mysql.TinyintField
 
     def test_get_content_gen(self):
         self.assertEquals(71, self.field.get_random_value())
 
 
-class TestMediumIntField(BaseTestField):
-
+class TestSmallintField(BaseTestField):
     def get_test_class(self):
-        return mysql.SmallIntField
+        return mysql.SmallintField
 
     def test_get_content_gen(self):
         self.assertEquals(18138, self.field.get_random_value())
 
 
-class TestIntField(BaseTestField):
+class TestMediumintField(BaseTestField):
+    def get_test_class(self):
+        return mysql.MediumintField
 
+    def test_get_content_gen(self):
+        self.assertEquals(4643358, self.field.get_random_value())
+
+
+class TestIntField(BaseTestField):
     def get_test_class(self):
         return mysql.IntField
 
@@ -129,22 +131,20 @@ class TestIntField(BaseTestField):
         self.assertEquals(1188699766, self.field.get_random_value())
 
 
-class TestBigIntField(BaseTestField):
-
+class TestBigintField(BaseTestField):
     def get_test_class(self):
-        return mysql.BigIntField
+        return mysql.BigintField
 
     def test_get_content_gen(self):
         self.assertEquals(3741057809691319936, self.field.get_random_value())
 
 
 class TestDecimalField(BaseTestField):
-
     def _create_field(self):
         return self.get_test_class()("value", 5, 2)
 
     def get_test_class(self):
-        return mysql.Decimalfield
+        return mysql.DecimalField
 
     def test_creation_with_precision_less_then_scale(self):
         # Init method should raise an ValueError exception with
@@ -156,22 +156,40 @@ class TestDecimalField(BaseTestField):
         self.assertEquals(138.8, self.field.get_random_value())
 
 
-class TestDateField(BaseTestField):
+class TestFloatField(TestDecimalField):
+    def get_test_class(self):
+        return mysql.FloatField
 
+
+class TestRealField(TestDecimalField):
+    def get_test_class(self):
+        return mysql.RealField
+
+
+class TestDoubleField(TestDecimalField):
+    def get_test_class(self):
+        return mysql.DoubleField
+
+
+class TestNumericField(TestDecimalField):
+    def get_test_class(self):
+        return mysql.NumericField
+
+
+class TestDateField(BaseTestField):
     def get_test_class(self):
         return mysql.DateField
 
     def test_get_content_gen(self):
-        self.assertEquals(date(2010, 10, 14), self.field.get_random_value())
+        self.assertEquals(date(2016, 11, 16), self.field.get_random_value())
 
 
-class TestDateTimeField(BaseTestField):
-
+class TestDatetimeField(BaseTestField):
     def get_test_class(self):
-        return mysql.DateTimeField
+        return mysql.DatetimeField
 
     def test_get_content_gen(self):
-        dt = datetime(2011, 3, 26, 0, 18, 55, 319481)
+        dt = datetime(2016, 11, 16, 0, 18, 55, 319481)
         result = self.field.get_random_value()
 
         self.assertEquals(dt.year, result.year)
@@ -183,7 +201,6 @@ class TestDateTimeField(BaseTestField):
 
 
 class TestTimestampField(BaseTestField):
-
     def get_test_class(self):
         return mysql.TimestampField
 
@@ -192,7 +209,6 @@ class TestTimestampField(BaseTestField):
 
 
 class TestTimeField(BaseTestField):
-
     def get_test_class(self):
         return mysql.TimeField
 
@@ -201,7 +217,6 @@ class TestTimeField(BaseTestField):
 
 
 class TestYearField(BaseTestField):
-
     def get_test_class(self):
         return mysql.YearField
 
@@ -209,8 +224,35 @@ class TestYearField(BaseTestField):
         self.assertEquals(2014, self.field.get_random_value())
 
 
-class TestTextField(BaseTestField):
+class TestCharField(BaseTestField):
+    def _create_field(self):
+        return self.get_test_class()("name", 25)
 
+    def get_test_class(self):
+        return mysql.CharField
+
+    def test_get_content_gen(self):
+        self.assertEquals("Integ", self.field.get_random_value())
+        self.assertEquals("Ut ", self.field.get_random_value())
+        self.assertEquals("In ullamcor", self.field.get_random_value())
+
+
+class TestVarcharFeld(TestCharField):
+    def get_test_class(self):
+        return mysql.VarcharField
+
+
+class TestBinaryFeld(TestCharField):
+    def get_test_class(self):
+        return mysql.BinaryField
+
+
+class TestVarbinaryFeld(TestCharField):
+    def get_test_class(self):
+        return mysql.VarbinaryField
+
+
+class TestTextField(BaseTestField):
     def _create_field(self):
         return self.get_test_class()("name", 55)
 
@@ -231,7 +273,7 @@ class TestEnumField(BaseTestField):
     def _create_field(self):
         return self.get_test_class()(
             "enum_field",
-            mysql.EnumField.parse(self.database_spec)
+            self.get_test_class().parse(self.database_spec)
         )
 
     def get_test_class(self):
@@ -245,3 +287,28 @@ class TestEnumField(BaseTestField):
 
     def test_get_content_gen(self):
         self.assertEquals("test',strage2", self.field.get_random_value())
+
+
+class TestSetField(BaseTestField):
+    database_spec =\
+        "set('a','b''','c','dd','e')"
+
+    def _create_field(self):
+        return self.get_test_class()(
+            "enum_field",
+            self.get_test_class().parse(self.database_spec)
+        )
+
+    def get_test_class(self):
+        return mysql.SetField
+
+    def test_parse(self):
+        self.assertEquals(
+            ["a", "b'", "c", 'dd', 'e'],
+            self.get_test_class().parse(self.database_spec)
+        )
+
+    def test_get_content_gen(self):
+        self.assertEquals("a,b',c", self.field.get_random_value())
+        self.assertEquals("a,dd", self.field.get_random_value())
+        self.assertEquals("a,e", self.field.get_random_value())

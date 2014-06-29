@@ -1,5 +1,6 @@
 import random
 from datetime import date, timedelta, datetime
+import re
 
 
 _phrases = [
@@ -48,14 +49,8 @@ _phrases = [
 ]
 
 
-class ContentGen:
+class ContentGen(object):
     """Content generator with 'Loren ipsum' texts and random numbers"""
-
-    # Default start date is two years ago.
-    _days_default_start_date = 365*2
-
-    # Default start datetime is seven days ago.
-    _days_default_start_datetime = 7
 
     def __init__(self, random_instance=None):
         if random_instance is not None:
@@ -71,6 +66,13 @@ class ContentGen:
 
         return phrase
 
+    def get_list_subset(self, list):
+        options = []
+        for i in range(self.get_int(0, len(list))):
+            options.append(self.get_in_list(list))
+
+        return set(options)
+
     def get_in_list(self, list):
         return list[self.get_int(0, len(list)-1)]
 
@@ -81,20 +83,23 @@ class ContentGen:
         if start is None:
             start = self._get_default_start_date()
 
-        end = end if end is not None else date.today()
+        end = end if end is not None else self._get_default_end_date()
 
         td_diff = end - start if start <= end else start - end
         return start + timedelta(self.get_int(0, td_diff.days))
 
     def _get_default_start_date(self):
-        return date(2000, 1, 1) - timedelta(days=self._days_default_start_date)
+        return date(2006, 1, 1)
+
+    def _get_default_end_date(self):
+        return date(2020, 1, 1)
 
     def get_datetime(self, start=None, end=None):
         if start is None:
             start = self._get_default_start_datetime()
 
         if end is None:
-            end = datetime.now()
+            end = self._get_default_end_datetime()
 
         td_diff = end - start if start <= end else start - end
         return start + timedelta(
@@ -103,8 +108,193 @@ class ContentGen:
         )
 
     def _get_default_start_datetime(self):
-        return datetime(2000, 1, 1, 0, 0, 0)
-        - timedelta(days=self._days_default_start_datetime)
+        return datetime(2006, 1, 1, 0, 0, 0)
+
+    def _get_default_end_datetime(self):
+        return datetime(2020, 1, 1, 0, 0, 0)
 
     def get_int(self, start, end):
         return self._random.randint(start, end)
+
+
+class OptionsParser(object):
+    """
+    Parse a string of options separated with comma.
+    Examples:
+    p = OptionsParser()
+
+    p.parse("'a','b'").options # Results: [ "a" , "b" ]
+
+    p.parse("'a','b','c'''").options # Results: [ "a" , "b" , "c'" ]
+
+    p.parse("'a','b'',','c'''").options # Results: [ "a" , "b'," , "c'" ]
+    """
+
+    # Grammar:
+    #   OPTIONS = COMMA OPTION | OPTION
+    #   OPTION = QUOTE OPTION_VALUE QUOTE
+    #   OPTION_VALUE = PARTIAL_OPTION | QUOTE QUOTE | COMMA
+    #   QUOTE = '''
+    #   PARTIAL_VALUE = '[^',]'
+    #   COMMA = ','
+    tokens_regex = {
+        "QUOTE": r"^(')",
+        "COMMA": r"(\,)",
+        "PARTIAL_OPTION": r"^([^'\,]+)",
+    }
+
+    def __init__(self):
+        self.options = []
+        self._result_tokens = []
+        self._token_position = 0
+        self._parsed_option = ""
+
+    def parse(self, str_options):
+        self._tokenize(str_options)
+        self._parse()
+        return self
+
+    def _tokenize(self, str_options):
+        self._result_tokens = []
+        i = 0
+        while (i < len(str_options)):
+            increment = None
+            for token, pattern in self.tokens_regex.iteritems():
+                m = re.search(pattern, str_options[i:])
+                if m is not None:
+                    self._result_tokens.append((token, m.group(1), i+1))
+                    increment = len(m.group(0))
+                    break
+
+            if increment is None:
+                msg = "Unexpected value on parse enum options: \"{0}\""\
+                    .format(str_options[i:])
+
+                raise ValueError(msg)
+
+            i = i + increment
+
+    def _parse(self):
+        "Starts the Top-down parser"
+        self.options = []
+        self._token_position = 0
+        if not self._parse_options():
+            msg = "Unexpected token '{0}', value '{1}', position: {2}".format(
+                self._get_actual_token(),
+                self._get_actual_token_value(),
+                self._get_actual_token_str_position()
+            )
+            raise ValueError(msg)
+
+    def _parse_options(self):
+        "Parse grammar 'OPTIONS = COMMA OPTION | OPTION'"
+
+        while self._get_actual_token() is not None:
+            tp = self._token_position
+            if self._parse_comma() and self._parse_option():
+                continue
+
+            self._token_position = tp
+            if self._parse_option():
+                continue
+
+            self._token_position = tp
+            break
+
+        # It is OK If all Tokens was parsed
+        if self._get_actual_token() is None:
+            return True
+
+        return False
+
+    def _parse_option(self):
+        "Parse grammar 'QUOTE OPTION_VALUE QUOTE'"
+        tp = self._token_position
+        if self._parse_quote() \
+                and self._parse_option_value() \
+                and self._parse_quote():
+            return True
+
+        self._token_position = tp
+        return False
+
+    def _parse_option_value(self):
+        "Parse grammar 'OPTION_VALUE = PARTIAL_OPTION | QUOTE QUOTE | COMMA'"
+
+        self._parsed_option = ""
+        parsed = False  # Change to True if something was parsed
+        while True:
+            tp = self._token_position
+            if self._parse_quote() and self._parse_quote(True):
+                parsed = True
+                continue
+
+            self._token_position = tp
+            if self._parse_partial_option(True):
+                parsed = True
+                continue
+
+            self._token_position = tp
+            if self._parse_comma(True):
+                parsed = True
+                continue
+
+            self._token_position = tp
+            break
+
+        self.options.append(self._parsed_option)
+        return parsed
+
+    def _parse_partial_option(self, add_value=False):
+        "Parse PARTIAL_OPTION token"
+
+        if self._get_actual_token() == "PARTIAL_OPTION":
+            if add_value:
+                self._parsed_option += self._get_actual_token_value()
+
+            self._token_position += 1
+            return True
+
+        return False
+
+    def _parse_quote(self, add_value=False):
+        "Parse QUOTE token"
+
+        if self._get_actual_token() == "QUOTE":
+            if add_value:
+                self._parsed_option += self._get_actual_token_value()
+
+            self._token_position += 1
+            return True
+
+        return False
+
+    def _parse_comma(self, add_value=False):
+        "Parse COMMA token"
+
+        if self._get_actual_token() == "COMMA":
+            if add_value:
+                self._parsed_option += self._get_actual_token_value()
+
+            self._token_position += 1
+            return True
+
+        return False
+
+    def _get_actual_token(self):
+        try:
+            return self._result_tokens[self._token_position][0]
+        except Exception, e:
+            return None
+
+    def _get_actual_token_value(self):
+        try:
+            return self._result_tokens[self._token_position][1]
+        except Exception, e:
+            return None
+
+    def _get_actual_token_str_position(self):
+        try:
+            return self._result_tokens[self._token_position][2]
+        except Exception, e:
+            return None
