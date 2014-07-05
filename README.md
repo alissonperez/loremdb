@@ -1,6 +1,6 @@
-[![Build Status](https://travis-ci.org/alissonperez/lordb.svg?branch=develop)](https://travis-ci.org/alissonperez/lordb)
+[![Build Status](https://travis-ci.org/alissonperez/loremdb.svg?branch=develop)](https://travis-ci.org/alissonperez/loremdb)
 
-lordb
+loremdb
 =====
 
-LorDB
+LoremDB

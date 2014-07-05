@@ -1,8 +1,8 @@
 import unittest
-from lordb.database.core import DataBaseCreator, DataBase
-from lordb.database.sqlite import DataBase as SqliteDataBase
-from lordb.database.mysql import DataBase as MysqlDataBase
-from lordb.util import ContentGen
+from loremdb.database.core import DataBaseCreator, DataBase
+from loremdb.database.sqlite import DataBase as SqliteDataBase
+from loremdb.database.mysql import DataBase as MysqlDataBase
+from loremdb.util import ContentGen
 
 
 class test_database_creator(unittest.TestCase):
@@ -19,7 +19,7 @@ class test_database_creator(unittest.TestCase):
             content_gen=ContentGen(),
             user='root',
             password='',
-            database='lordb_test'
+            database='loremdb_test'
         )
 
         self.assertTrue(isinstance(database, DataBase))

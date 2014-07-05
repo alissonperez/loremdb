@@ -1,7 +1,7 @@
 import unittest
-from lordb.database.core import DataBaseCreator
-from lordb.database import mysql
-from lordb.util import ContentGen
+from loremdb.database.core import DataBaseCreator
+from loremdb.database import mysql
+from loremdb.util import ContentGen
 from random import Random
 from abc import ABCMeta, abstractmethod
 from datetime import date, datetime
@@ -21,7 +21,7 @@ class DataBaseTestCase(unittest.TestCase):
             ContentGen(),
             user="root",
             password="",
-            database="lordb_test"
+            database="loremdb_test"
         )
 
     def clean_tables(self):
@@ -79,7 +79,7 @@ class TestFieldCreatorFromMysql(unittest.TestCase):
         self.creator = mysql.FieldCreatorFromMysql()
         self.default_row = {
             "table_catalog": "def",
-            "table_schema": "lordb",
+            "table_schema": "loremdb",
             "table_name": "users",
             "column_name": "name",
             "ordinal_position": "2",

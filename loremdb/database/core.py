@@ -1,5 +1,5 @@
 import random
-from lordb.util import ContentGen
+from loremdb.util import ContentGen
 from abc import ABCMeta, abstractmethod
 
 

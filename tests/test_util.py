@@ -1,12 +1,12 @@
 import unittest
-import lordb.util
+import loremdb.util
 from datetime import date, datetime
 
 
 class test_content_gen(unittest.TestCase):
 
     def setUp(self):
-        self.i = lordb.util.ContentGen()
+        self.i = loremdb.util.ContentGen()
 
     def test_get_int(self):
         for i in xrange(100):
@@ -72,7 +72,7 @@ class test_content_gen(unittest.TestCase):
 class testOptionsParser(unittest.TestCase):
 
     def setUp(self):
-        self.parser = lordb.util.OptionsParser()
+        self.parser = loremdb.util.OptionsParser()
 
     def test_parser(self):
         self.assertEquals(

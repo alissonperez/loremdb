@@ -3,13 +3,13 @@ from tests import DiscoverTest
 
 
 setup(
-    name="LorDB",
+    name="LoremDB",
     version="0.0.1",
     author="Alisson R. Perez",
     author_email="alissonperez@gmail.com",
     # @todo - Update with our PyPI package page
     url="https://pypi.python.org/pypi",
-    packages=["lordb"],
+    packages=["loremdb"],
     classifiers=[
         "Programming Language :: Python",
         "Programming Language :: Python :: 2.7",

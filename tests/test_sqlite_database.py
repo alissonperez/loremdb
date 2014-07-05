@@ -1,12 +1,12 @@
 import unittest
-from lordb.database.core import DataBaseCreator
-from lordb.database.sqlite import Table
-from lordb.util import ContentGen
+from loremdb.database.core import DataBaseCreator
+from loremdb.database.sqlite import Table
+from loremdb.util import ContentGen
 import sqlite3
 
 
 class SqliteDataBaseTestCase(unittest.TestCase):
-    database_name = "/tmp/lordb-unittest-database"
+    database_name = "/tmp/loremdb-unittest-database"
 
     def setUp(self):
         self.create_tables()

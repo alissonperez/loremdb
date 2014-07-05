@@ -1,10 +1,14 @@
 import core
 from importlib import import_module
-from lordb.util import OptionsParser
+from loremdb.util import OptionsParser
 import re
 
 
 class Table(core.Table):
+    def __init__(self, *args, **kargs):
+        super(Table, self).__init__(*args, **kargs)
+        self.field_creator = FieldCreatorFromMysql()
+
     def _create_insert_sql(self):
         fields_num = len(self._get_fields())
         return "INSERT INTO {0} ({1}) VALUES ({2})".format(
@@ -40,9 +44,10 @@ class Table(core.Table):
 
         c.execute(sql, (self._database.database, self.name))
 
-        field_creator = FieldCreatorFromMysql()
         for row in c:
-            self.__fields.append(field_creator.create(dict(zip(cols, row))))
+            self.__fields.append(
+                self.field_creator.create(dict(zip(cols, row)))
+            )
 
         c.close()
 

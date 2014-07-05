@@ -1,4 +1,4 @@
-create database if not exists lordb_test ; use lordb_test ;
+create database if not exists loremdb_test ; use loremdb_test ;
 
 drop table if exists users ;
 create table users (
