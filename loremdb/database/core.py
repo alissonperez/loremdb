@@ -4,7 +4,9 @@ from abc import ABCMeta, abstractmethod
 
 
 class DataBaseCreator(object):
-    """Factory to create databases"""
+    """
+    Factory to create databases
+    """
 
     def create_sqlite(
             self, content_gen, name, *args, **kargs):
@@ -12,13 +14,16 @@ class DataBaseCreator(object):
         return _DataBase(content_gen, name, *args, **kargs)
 
     def create_mysql(
-            self, content_gen, user, password, database, *args, **kargs):
+            self, content_gen, user, database, *args, **kargs):
         from mysql import DataBase as _DataBase
-        return _DataBase(content_gen, user, password, database, *args, **kargs)
+        return _DataBase(content_gen, user, database, *args, **kargs)
 
 
 class Table(object):
-    """Abstract entity representing a collection of data"""
+    """
+    Abstract entity representing a collection of data
+    """
+
     __metaclass__ = ABCMeta
 
     def __init__(self, database, name, content_gen):
@@ -45,13 +50,17 @@ class Table(object):
 
     @abstractmethod
     def _create_insert_sql(self):
-        """Creates an insert sql with 'wildcards'
-        to use with _get_random_params()."""
+        """
+        Creates an insert sql with 'wildcards'
+        to use with _get_random_params().
+        """
         return NotImplemented
 
     def _get_random_params(self):
-        """Returns a dictionary with field names as index and
-        its random values"""
+        """
+        Returns a dictionary with field names as index and
+        its random values
+        """
 
         values = []
         for field in self._get_fields():
@@ -62,14 +71,18 @@ class Table(object):
 
     @abstractmethod
     def _get_fields(self):
-        """Returns fields in the Table
+        """
+        Returns fields in the Table
         Used with query returned in _create_insert_sql() and
-        _get_random_params()"""
+        _get_random_params()
+        """
         return NotImplemented
 
 
 class Field(object):
-    """Abstract entity representing a field in the Database"""
+    """
+    Abstract entity representing a field in the Database
+    """
 
     __metaclass__ = ABCMeta
 
@@ -87,8 +100,12 @@ class Field(object):
 
 
 class DataBase(object):
-    """Abstract entity representing a database"""
+    """
+    Abstract entity representing a database
+    """
+
     __metaclass__ = ABCMeta
+
     _table_cls = Table
 
     def __init__(self, content_gen):
@@ -126,12 +143,16 @@ class DataBase(object):
 
     @abstractmethod
     def get_conn(self):
-        """Returns a connection object.
-        It is overridden by the subclasses"""
+        """
+        Returns a connection object.
+        It is overridden by the subclasses
+        """
         return NotImplemented
 
     @abstractmethod
     def get_tables_name_sql(self):
-        """Returns a query with table's name in the first column.
-        It is overridden by the subclasses"""
+        """
+        Returns a query with table's name in the first column.
+        It is overridden by the subclasses
+        """
         return NotImplemented

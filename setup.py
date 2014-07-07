@@ -1,6 +1,23 @@
 from distutils.core import setup
-from tests import DiscoverTest
+import os
 
+# Compile a list of packages available
+packages = []
+for dirpath, dirnames, filenames in os.walk("loremdb"):
+    if "__pycache__" in dirpath:
+        continue
+
+    packages.append(dirpath.replace("/", "."))
+
+packages = set(packages)
+
+cmdclass = {}
+try:
+    # Include additional command to run tests in develop env
+    from tests import DiscoverTest
+    cmdclass = {"test": DiscoverTest}
+except Exception, e:
+    pass
 
 setup(
     name="LoremDB",
@@ -9,7 +26,8 @@ setup(
     author_email="alissonperez@gmail.com",
     # @todo - Update with our PyPI package page
     url="https://pypi.python.org/pypi",
-    packages=["loremdb"],
+    packages=packages,
+    scripts=["bin/loremdb"],
     classifiers=[
         "Programming Language :: Python",
         "Programming Language :: Python :: 2.7",
@@ -19,6 +37,6 @@ setup(
         "Intended Audience :: Developers",
         "Topic :: Database",
     ],
-    cmdclass={"test": DiscoverTest}
+    cmdclass=cmdclass
     # @todo - Include: "description" and "long_description"
 )

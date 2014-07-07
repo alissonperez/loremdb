@@ -20,7 +20,6 @@ class DataBaseTestCase(unittest.TestCase):
         return DataBaseCreator().create_mysql(
             ContentGen(),
             user="root",
-            password="",
             database="loremdb_test"
         )
 

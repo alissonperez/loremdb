@@ -160,7 +160,9 @@ class DoubleField(DecimalField):
 
 
 class NumericField(DecimalField):
-    "In MySQL, NUMERIC is implemented as DECIMAL..."
+    """
+    In MySQL, NUMERIC is implemented as DECIMAL...
+    """
     pass
 
 
@@ -255,8 +257,8 @@ class DataBase(core.DataBase):
     _table_cls = Table
 
     def __init__(
-            self, content_gen, user, password, database,
-            engine="mysql.connector", port="3306"):
+            self, content_gen, user, database, password=None,
+            host="localhost", engine="mysql.connector", port="3306"):
         super(DataBase, self).__init__(content_gen)
         self.user = user
         self.password = password
@@ -281,7 +283,10 @@ class DataBase(core.DataBase):
         return self._conn
 
     def get_tables_name_sql(self):
-        """Returns a query with table's name in the first column"""
+        """
+        Returns a query with table's name in the first column
+        """
+
         return """SELECT table_name
             FROM information_schema.tables
             WHERE TABLE_SCHEMA = '{0}'""".format(self.database)
