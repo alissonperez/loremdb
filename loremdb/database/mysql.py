@@ -264,6 +264,7 @@ class DataBase(core.DataBase):
         self.password = password
         self.database = database
         self.port = port
+        self.host = host
 
         self._engine = engine
 
@@ -277,6 +278,7 @@ class DataBase(core.DataBase):
             user=self.user,
             password=self.password,
             database=self.database,
+            host=self.host,
             port=self.port
         )
 
