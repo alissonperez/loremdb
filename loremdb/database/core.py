@@ -111,6 +111,7 @@ class DataBase(object):
     def __init__(self, content_gen):
         self._content_gen = content_gen
         self.show_errors = False
+        self._filter_args = None
 
     def fill(self, *args, **kargs):
         c = self.get_cursor()
@@ -140,6 +141,12 @@ class DataBase(object):
 
     def commit(self):
         self.get_conn().commit()
+
+    def filter(self, *args):
+        """
+        Filter param to fill
+        """
+        self._filter_args = args
 
     @abstractmethod
     def get_conn(self):

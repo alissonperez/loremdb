@@ -26,6 +26,7 @@ class DataBaseTestCase(unittest.TestCase):
     def clean_tables(self):
         c = self.database.get_cursor()
         c.execute("DELETE FROM users")
+        c.execute("DELETE FROM sections")
         self.database.commit()
         c.close()
 
@@ -39,9 +40,15 @@ class TestDataBase(DataBaseTestCase):
         c.execute("SELECT * from users")
         self.assertEquals(0, len(c.fetchall()))
 
+        c.execute("SELECT * from sections")
+        self.assertEquals(0, len(c.fetchall()))
+
         self.database.fill(n=10)
 
         c.execute("SELECT * from users")
+        self.assertEquals(10, len(c.fetchall()))
+
+        c.execute("SELECT * from sections")
         self.assertEquals(10, len(c.fetchall()))
 
         c.close()
@@ -49,9 +56,31 @@ class TestDataBase(DataBaseTestCase):
     def test_get_tables(self):
         tables = self.database.get_tables()
 
-        self.assertEquals(1, len(tables))
+        self.assertEquals(2, len(tables))
 
         self.assertTrue("users" in tables)
+
+    def test_filter(self):
+        c = self.database.get_cursor()
+
+        c.execute("SELECT * from users")
+        self.assertEquals(0, len(c.fetchall()))
+
+        c.execute("SELECT * from sections")
+        self.assertEquals(0, len(c.fetchall()))
+
+        self.database.filter("sections")
+        self.database.fill(n=10)
+
+        c.execute("SELECT * from users")
+        self.assertEquals(0, len(c.fetchall()))
+
+        c.execute("SELECT * from sections")
+        self.assertEquals(10, len(c.fetchall()))
+
+    def test_filter_with_nonexistent_table(self):
+        self.database.filter("flunfla")
+        self.assertRaises(Exception, self.database.fill, 10)
 
 
 class TestTable(DataBaseTestCase):

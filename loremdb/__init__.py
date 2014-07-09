@@ -43,6 +43,10 @@ class LoremDb(object):
         self._parser.add_argument(
             "--version", action="version", version="%(prog)s "+version)
 
+        self._parser.add_argument(
+            "--filter", dest="filter",
+            help="Filter argument to populate database")
+
     def execute(self, args=None):
         if args is None:
             args = sys.argv[1:]
@@ -105,6 +109,10 @@ class MysqlDbmsHandle(DbmsHandle):
 
         from database import mysql
         db = mysql.DataBase(**params)
+
+        if self.options.filter is not None:
+            db.filter(self.options.filter)
+
         db.fill(self.options.number)
 
     def _get_params(self):

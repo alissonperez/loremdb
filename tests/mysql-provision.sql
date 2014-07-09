@@ -9,3 +9,10 @@ create table users (
     roles set('user','admin') NOT NULl DEFAULT 'user',
     creation_date date not null
 ) ;
+
+drop table if exists sections ;
+create table sections (
+    id smallint unsigned not null PRIMARY KEY AUTO_INCREMENT ,
+    name varchar(25) not null ,
+    creation_date date not null
+) ;

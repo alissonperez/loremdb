@@ -284,6 +284,21 @@ class DataBase(core.DataBase):
 
         return self._conn
 
+    def get_tables(self):
+        tables = super(DataBase, self).get_tables()
+
+        if self._filter_args is None:
+            return tables
+
+        # Check if filters are valid
+        diff_tables = list(set(self._filter_args) - set(tables))
+        if len(diff_tables) > 0:
+            raise Exception(
+                "Unespected filters: " + ", ".join(diff_tables)
+            )
+
+        return self._filter_args
+
     def get_tables_name_sql(self):
         """
         Returns a query with table's name in the first column
