@@ -131,3 +131,24 @@ class MysqlDbmsHandle(DbmsHandle):
 # @todo
 class SqliteDbmsHandle(object):
     pass
+
+
+class Signal(object):
+
+    def __init__(self):
+        self._slots = {}
+
+    def __call__(self):
+        for key, func in self._slots.iteritems():
+            func.im_func(func.im_self)
+
+    def register(self, slot):
+        self._slots[self._get_key(slot)] = slot
+
+    def unregister(self, slot):
+        key = self._get_key(slot)
+        if key in self._slots:
+            del self._slots[key]
+
+    def _get_key(self, slot):
+        return (slot.im_func, id(slot.im_self))

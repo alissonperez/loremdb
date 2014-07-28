@@ -298,3 +298,45 @@ class OptionsParser(object):
             return self._result_tokens[self._token_position][2]
         except Exception, e:
             return None
+
+
+# @todo - Add use description
+class OutputProgress(object):
+
+    line_size = 50
+    lines = 10
+    dots = 0.0
+
+    def __init__(self, progress_size, callback):
+        self.progress_size = progress_size
+        self._callback = callback
+
+    def __call__(self):
+        original_dots = int(self.dots)
+        self.dots += self._get_ratio()
+
+        if int(self.dots) > int(original_dots):
+            self._call_callback(int(self.dots) - int(original_dots))
+
+    def _call_callback(self, diff):
+        old_qtd = int(self.dots) - diff
+        old_page = int(old_qtd / self.line_size)
+
+        for c in range(1, diff+1):
+            self._callback(".")
+
+            # Show percent
+            act_page = int((old_qtd+c)/self.line_size)
+            if act_page > old_page:
+                self._show_percent()
+                old_page = act_page
+
+    def _show_percent(self):
+        self._callback(
+            " %.0f%%" % (self.dots / (self.line_size * self.lines) * 100)
+        )
+
+        self._callback("\n")
+
+    def _get_ratio(self):
+        return self.line_size * self.lines / self.progress_size

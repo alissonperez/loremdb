@@ -118,3 +118,41 @@ class testOptionsParser(unittest.TestCase):
 
     def test_parser_with_wrong_quote(self):
         self.assertRaises(ValueError, self.parser.parse, "'a','b")
+
+
+# @todo - Add description
+class testOutputProgress(unittest.TestCase):
+
+    output = []
+
+    def setUp(self):
+        self.output = []
+        self.obj = loremdb.util.OutputProgress(500, self.callback)
+
+    def callback(self, to_print):
+        self.output.append(to_print)
+
+    def test_simple_dot_print(self):
+        self.obj()
+        self.assertEquals(["."], self.output)
+
+    def test_line_break(self):
+        for i in range(49):
+            self.obj()
+
+        test_list = ["." for __ in range(49)]
+        self.assertEquals(test_list, self.output)
+
+        # Adding two dots
+        self.obj()
+        self.obj()
+        test_list += [".", " 10%", "\n", "."]
+
+        self.assertEquals(test_list, self.output)
+
+        # Completing another line
+        for i in range(49):
+            self.obj()
+
+        test_list += ["." for __ in range(49)] + [" 20%", "\n"]
+        self.assertEquals(test_list, self.output)
