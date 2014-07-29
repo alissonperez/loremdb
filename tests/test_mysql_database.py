@@ -34,6 +34,11 @@ class DataBaseTestCase(unittest.TestCase):
 class TestDataBase(DataBaseTestCase):
     num = 10
 
+    def setUp(self):
+        super(TestDataBase, self).setUp()
+        self.signal_calls = []
+        self.signal_calls_counter = 0
+
     def test_fill(self):
         c = self.database.get_cursor()
 
@@ -82,12 +87,38 @@ class TestDataBase(DataBaseTestCase):
         self.database.filter("flunfla")
         self.assertRaises(Exception, self.database.fill, 10)
 
+    def test_signal_on_change_table(self):
+        self.database.on_change_table.register(self.signal_callback)
+
+        self.database.fill(10)
+
+        result = [
+            {"name": "sections"} ,
+            {"name": "users"} ,
+        ]
+
+        self.assertEquals(result, self.signal_calls)
+
+    def test_signal_on_insert(self):
+        self.database.on_insert.register(self.signal_callback_on_insert)
+        self.database.filter("sections")
+        self.database.fill(10)
+        self.assertEquals(10, self.signal_calls_counter)
+
+    def signal_callback(self, table_info):
+        self.signal_calls.append(table_info)
+
+    def signal_callback_on_insert(self):
+        self.signal_calls_counter += 1
+
 
 class TestTable(DataBaseTestCase):
+
     def setUp(self):
         super(TestTable, self).setUp()
         self.table = mysql.Table(self.database, "users", ContentGen())
         self.table.show_errors = False
+        self.signal_calls_counter = 0
 
     def test_fill(self):
         c = self.table.get_cursor()
@@ -100,6 +131,22 @@ class TestTable(DataBaseTestCase):
 
         c.execute("SELECT name, age from users")
         self.assertEquals(10, len(c.fetchall()))
+
+    def test_signal(self):
+        self.table.on_insert.register(self.signal_callback)
+
+        self.table.fill(n=10)
+
+        self.assertEquals(10, self.signal_calls_counter)
+
+    def signal_callback(self):
+        self.signal_calls_counter += 1
+
+    def test_get_table_info(self):
+        self.assertEquals(
+            {"name": "users"} ,
+            self.table.table_info
+        )
 
 
 class TestFieldCreatorFromMysql(unittest.TestCase):

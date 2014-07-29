@@ -1,5 +1,6 @@
 import random
 from loremdb.util import ContentGen
+from loremdb import Signal
 from abc import ABCMeta, abstractmethod
 
 
@@ -31,6 +32,7 @@ class Table(object):
         self._database = database
         self._content_gen = content_gen
         self.show_errors = False
+        self.on_insert = Signal()
 
     def fill(self, n=10):
         c = self.get_cursor()
@@ -38,6 +40,7 @@ class Table(object):
         sql = self._create_insert_sql()
         for i in xrange(n):
             try:
+                self.on_insert()
                 c.execute(sql, self._get_random_params())
             except Exception, e:
                 if self.show_errors:
@@ -47,6 +50,11 @@ class Table(object):
 
     def get_cursor(self):
         return self._database.get_cursor()
+
+    @property
+    def table_info(self):
+        return {"name": self.name}
+    
 
     @abstractmethod
     def _create_insert_sql(self):
@@ -112,6 +120,8 @@ class DataBase(object):
         self._content_gen = content_gen
         self.show_errors = False
         self._filter_args = None
+        self.on_change_table = Signal()
+        self.on_insert = Signal()
 
     def fill(self, *args, **kargs):
         c = self.get_cursor()
@@ -119,10 +129,15 @@ class DataBase(object):
         for table in self.get_tables():
             table = self._table_cls(self, table, self._content_gen)
             table.show_errors = self.show_errors
+            table.on_insert.register(self._on_insert_callback)
+            self.on_change_table(table.table_info)
             table.fill(*args, **kargs)
 
         self.commit()
         c.close()
+
+    def _on_insert_callback(self):
+        self.on_insert()
 
     def get_tables(self):
         c = self.get_cursor()

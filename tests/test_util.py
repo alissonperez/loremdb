@@ -1,6 +1,7 @@
 import unittest
 import loremdb.util
 from datetime import date, datetime
+from os import linesep
 
 
 class test_content_gen(unittest.TestCase):
@@ -120,7 +121,6 @@ class testOptionsParser(unittest.TestCase):
         self.assertRaises(ValueError, self.parser.parse, "'a','b")
 
 
-# @todo - Add description
 class testOutputProgress(unittest.TestCase):
 
     output = []
@@ -146,7 +146,7 @@ class testOutputProgress(unittest.TestCase):
         # Adding two dots
         self.obj()
         self.obj()
-        test_list += [".", " 10%", "\n", "."]
+        test_list += [".", " 10%", linesep, "."]
 
         self.assertEquals(test_list, self.output)
 
@@ -154,5 +154,19 @@ class testOutputProgress(unittest.TestCase):
         for i in range(49):
             self.obj()
 
-        test_list += ["." for __ in range(49)] + [" 20%", "\n"]
+        test_list += ["." for __ in range(49)] + [" 20%", linesep]
         self.assertEquals(test_list, self.output)
+
+    def test_reset(self):
+        for i in range(49):
+            self.obj()
+
+        test_list = ["." for __ in range(49)]
+        self.assertEquals(test_list, self.output)
+
+        # Reseting
+        self.output = []
+        self.obj.reset()
+
+        self.obj()
+        self.assertEquals(["."], self.output)

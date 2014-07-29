@@ -1,6 +1,7 @@
 import random
 from datetime import date, timedelta, datetime
 import re
+from os import linesep
 
 
 _phrases = [
@@ -300,26 +301,36 @@ class OptionsParser(object):
             return None
 
 
-# @todo - Add use description
+# @todo - Fix 'round' problem with numbers like 9 in progress_size
+# parameter. In these cases, '100 %' is not showed.
 class OutputProgress(object):
+    """
+    Show progress acording with a size (param progress_size)
+    Ex:
+    o = OutputProgress(100, sys.stdout.write) # All dots will be written in the screen.
+    o() # This will print (using sys.stdout.write) a dots quantity related with 100.
+    """
 
     line_size = 50
     lines = 10
-    dots = 0.0
+    _dots = 0.0
 
     def __init__(self, progress_size, callback):
         self.progress_size = progress_size
         self._callback = callback
 
     def __call__(self):
-        original_dots = int(self.dots)
-        self.dots += self._get_ratio()
+        original_dots = int(self._dots)
+        self._dots += self._get_ratio()
 
-        if int(self.dots) > int(original_dots):
-            self._call_callback(int(self.dots) - int(original_dots))
+        if int(self._dots) > int(original_dots):
+            self._call_callback(int(self._dots) - int(original_dots))
+
+    def reset(self):
+        self._dots = 0.0
 
     def _call_callback(self, diff):
-        old_qtd = int(self.dots) - diff
+        old_qtd = int(self._dots) - diff
         old_page = int(old_qtd / self.line_size)
 
         for c in range(1, diff+1):
@@ -333,10 +344,10 @@ class OutputProgress(object):
 
     def _show_percent(self):
         self._callback(
-            " %.0f%%" % (self.dots / (self.line_size * self.lines) * 100)
+            " %.0f%%" % (self._dots / (self.line_size * self.lines) * 100)
         )
 
-        self._callback("\n")
+        self._callback(linesep)
 
     def _get_ratio(self):
-        return self.line_size * self.lines / self.progress_size
+        return float(self.line_size * self.lines) / float(self.progress_size)

@@ -1,4 +1,4 @@
-from util import ContentGen
+from util import ContentGen, OutputProgress
 from abc import ABCMeta, abstractmethod
 import sys
 import argparse
@@ -71,13 +71,35 @@ class DbmsHandle(object):
 
     def __init__(self, args):
         self.options = args
+        self.output_progress = OutputProgress(args.number, sys.stdout.write)
 
     def execute(self):
         """
         A "TemplateMethod" to execute the dbms handle
         """
         self._validate_args()
+
+        self._show_intro()
         self._execute()
+        self._show_ending()
+
+    def _show_intro(self):
+        print "LoremDb v" + version
+        print "------------------------------------"
+
+    def _current_table_changed(self, table_info):
+        print ""
+        print "Populating '{}'".format(table_info["name"])
+        self.output_progress.reset()
+
+    def _insert_received(self):
+        self.output_progress()
+        sys.stdout.flush()
+
+    def _show_ending(self):
+        print ""
+        print " ... Finished"
+        print ""
 
     @abstractmethod
     def _validate_args(self):
@@ -110,6 +132,10 @@ class MysqlDbmsHandle(DbmsHandle):
         from database import mysql
         db = mysql.DataBase(**params)
 
+        # Adding main 'slots'
+        db.on_change_table.register(self._current_table_changed)
+        db.on_insert.register(self._insert_received)
+
         if self.options.filter is not None:
             db.filter(self.options.filter)
 
@@ -138,9 +164,9 @@ class Signal(object):
     def __init__(self):
         self._slots = {}
 
-    def __call__(self):
+    def __call__(self, *args, **kwargs):
         for key, func in self._slots.iteritems():
-            func.im_func(func.im_self)
+            func.im_func(func.im_self, *args, **kwargs)
 
     def register(self, slot):
         self._slots[self._get_key(slot)] = slot
