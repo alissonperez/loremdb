@@ -301,53 +301,64 @@ class OptionsParser(object):
             return None
 
 
-# @todo - Fix 'round' problem with numbers like 9 in progress_size
-# parameter. In these cases, '100 %' is not showed.
 class OutputProgress(object):
     """
     Show progress acording with a size (param progress_size)
     Ex:
     o = OutputProgress(100, sys.stdout.write) # All dots will be written in the screen.
     o() # This will print (using sys.stdout.write) a dots quantity related with 100.
+
+    OBS: Raise an StandardError if number of calls exceed progress_size parameter.
     """
 
     line_size = 50
     lines = 10
-    _dots = 0.0
+
+    # Number of calls and actual dots, respectively.
+    _calls_counter = 0
+    _actual_dots = 0
 
     def __init__(self, progress_size, callback):
         self.progress_size = progress_size
         self._callback = callback
 
-    def __call__(self):
-        original_dots = int(self._dots)
-        self._dots += self._get_ratio()
-
-        if int(self._dots) > int(original_dots):
-            self._call_callback(int(self._dots) - int(original_dots))
-
     def reset(self):
-        self._dots = 0.0
+        self._calls_counter = 0
+        self._actual_dots = 0
+
+    def __call__(self):
+        # The number of calls does'n exceed progres_size
+        if self._calls_counter + 1 > self.progress_size:
+            raise StandardError("Number of calls exhausted")
+
+        self._calls_counter += 1
+        self._print_dots()
+
+    def _print_dots(self):
+        total_dots = self.line_size * self.lines
+        new_dots = int(self._calls_counter * total_dots / self.progress_size)
+        
+        self._call_callback(new_dots - self._actual_dots)
+
+        self._actual_dots = new_dots
+
 
     def _call_callback(self, diff):
-        old_qtd = int(self._dots) - diff
-        old_page = int(old_qtd / self.line_size)
+        old_line = int(self._actual_dots / self.line_size)
 
         for c in range(1, diff+1):
             self._callback(".")
 
             # Show percent
-            act_page = int((old_qtd+c)/self.line_size)
-            if act_page > old_page:
-                self._show_percent()
-                old_page = act_page
+            act_line = int((self._actual_dots + c) / self.line_size)
+            if act_line > old_line:
+                self._show_percent(self._actual_dots + c)
+                old_line = act_line
 
-    def _show_percent(self):
+    def _show_percent(self, dots):
         self._callback(
-            " %.0f%%" % (self._dots / (self.line_size * self.lines) * 100)
+            " %.0f%%" % (float(dots) / (self.line_size * self.lines) * 100)
         )
 
         self._callback(linesep)
 
-    def _get_ratio(self):
-        return float(self.line_size * self.lines) / float(self.progress_size)

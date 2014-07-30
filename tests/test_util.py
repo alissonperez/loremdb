@@ -170,3 +170,11 @@ class testOutputProgress(unittest.TestCase):
 
         self.obj()
         self.assertEquals(["."], self.output)
+
+    def test_call_overflow(self):
+        self.obj.progress_size = 30
+
+        for i in range(30):
+            self.obj()
+
+        self.assertRaises(StandardError, self.obj)
