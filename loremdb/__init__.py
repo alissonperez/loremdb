@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 import sys
 import argparse
 
-version = "0.0.1"   # Application version
+version = "0.0.2"   # Application version
 
 
 class LoremDb(object):
