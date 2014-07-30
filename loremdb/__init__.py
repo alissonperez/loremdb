@@ -44,7 +44,7 @@ class LoremDb(object):
             "--version", action="version", version="%(prog)s "+version)
 
         self._parser.add_argument(
-            "--filter", dest="filter",
+            "--filter", dest="filter", nargs="+",
             help="Filter argument to populate database")
 
     def execute(self, args=None):
@@ -137,7 +137,7 @@ class MysqlDbmsHandle(DbmsHandle):
         db.on_insert.register(self._insert_received)
 
         if self.options.filter is not None:
-            db.filter(self.options.filter)
+            db.filter(*self.options.filter)
 
         db.fill(self.options.number)
 
