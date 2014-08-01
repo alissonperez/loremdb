@@ -305,10 +305,14 @@ class OutputProgress(object):
     """
     Show progress acording with a size (param progress_size)
     Ex:
-    o = OutputProgress(100, sys.stdout.write) # All dots will be written in the screen.
-    o() # This will print (using sys.stdout.write) a dots quantity related with 100.
+    o = OutputProgress(100, sys.stdout.write) # All dots will be
+    # written in the screen.
 
-    OBS: Raise an StandardError if number of calls exceed progress_size parameter.
+    o() # This will print (using sys.stdout.write) a dots
+    # quantity related with 100.
+
+    # OBS: Raise an StandardError if number of calls exceed
+    # progress_size parameter.
     """
 
     line_size = 50
@@ -337,11 +341,10 @@ class OutputProgress(object):
     def _print_dots(self):
         total_dots = self.line_size * self.lines
         new_dots = int(self._calls_counter * total_dots / self.progress_size)
-        
+
         self._call_callback(new_dots - self._actual_dots)
 
         self._actual_dots = new_dots
-
 
     def _call_callback(self, diff):
         old_line = int(self._actual_dots / self.line_size)
@@ -361,4 +364,3 @@ class OutputProgress(object):
         )
 
         self._callback(linesep)
-

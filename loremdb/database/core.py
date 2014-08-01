@@ -54,7 +54,6 @@ class Table(object):
     @property
     def table_info(self):
         return {"name": self.name}
-    
 
     @abstractmethod
     def _create_insert_sql(self):

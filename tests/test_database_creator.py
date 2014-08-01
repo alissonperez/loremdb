@@ -5,7 +5,7 @@ from loremdb.database.mysql import DataBase as MysqlDataBase
 from loremdb.util import ContentGen
 
 
-class test_database_creator(unittest.TestCase):
+class testDatabaseCreator(unittest.TestCase):
 
     def test_create_sqlite(self):
         database = DataBaseCreator().create_sqlite(

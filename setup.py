@@ -1,5 +1,6 @@
 from distutils.core import setup
 import os
+from loremdb import version
 
 # Compile a list of packages available
 packages = []
@@ -21,7 +22,7 @@ except Exception, e:
 
 setup(
     name="LoremDB",
-    version="0.0.1",
+    version=version,
     author="Alisson R. Perez",
     author_email="alissonperez@gmail.com",
     # @todo - Update with our PyPI package page

@@ -93,8 +93,8 @@ class TestDataBase(DataBaseTestCase):
         self.database.fill(10)
 
         result = [
-            {"name": "sections"} ,
-            {"name": "users"} ,
+            {"name": "sections"},
+            {"name": "users"},
         ]
 
         self.assertEquals(result, self.signal_calls)
@@ -144,7 +144,7 @@ class TestTable(DataBaseTestCase):
 
     def test_get_table_info(self):
         self.assertEquals(
-            {"name": "users"} ,
+            {"name": "users"},
             self.table.table_info
         )
 
