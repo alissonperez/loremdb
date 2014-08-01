@@ -44,8 +44,9 @@ class LoremDb(object):
             "--version", action="version", version="%(prog)s "+version)
 
         self._parser.add_argument(
-            "--filter", dest="filter", nargs="+",
-            help="Filter argument to populate database")
+            "--filter", dest="table", nargs="+",
+            help=("Filter to populate specific tables in "
+                  "the database; Separate tables with spaces ' '"))
 
     def execute(self, args=None):
         if args is None:
