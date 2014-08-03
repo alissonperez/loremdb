@@ -7,6 +7,11 @@ version = "0.0.2"   # Application version
 
 
 class ArgumentError(Exception):
+    """
+    Exception used when an Error
+    with arguments in command line happens
+    For an example: See '_validate_args' in the implementations of DbmsHandle.
+    """
     pass
 
 
@@ -77,6 +82,10 @@ class DbmsHandle(object):
     def __init__(self, args):
         self.options = args
         self.output_progress = OutputProgress(args.number, sys.stdout.write)
+        self.counters = {
+            "inserts": 0,
+            "insert_errors": 0,
+        }
 
     def execute(self):
         """
@@ -100,10 +109,22 @@ class DbmsHandle(object):
     def _insert_received(self):
         self.output_progress()
         sys.stdout.flush()
+        self.counters["inserts"] += 1
+
+    def _insert_error_received(self, e):
+        self.counters["insert_errors"] += 1
 
     def _show_ending(self):
         print ""
         print "... Finished"
+        print ""
+        print "------------------------------------"
+        print "Inserts: {}".format(self.counters["inserts"])
+        print "Inserts with errors: {}".format(self.counters["insert_errors"])
+        print "Inserts with success: {}".format(
+            self.counters["inserts"] - self.counters["insert_errors"]
+        )
+        print "------------------------------------"
         print ""
 
     @abstractmethod
@@ -140,6 +161,7 @@ class MysqlDbmsHandle(DbmsHandle):
         # Adding main 'slots'
         db.on_change_table.register(self._current_table_changed)
         db.on_insert.register(self._insert_received)
+        db.on_insert_error.register(self._insert_error_received)
 
         if self.options.filter is not None:
             db.filter(*self.options.filter)

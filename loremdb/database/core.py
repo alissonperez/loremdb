@@ -7,6 +7,7 @@ from abc import ABCMeta, abstractmethod
 class DataBaseCreator(object):
     """
     Factory to create databases
+    @todo   Remove this class, it's not used in anywhere
     """
 
     def create_sqlite(
@@ -22,7 +23,19 @@ class DataBaseCreator(object):
 
 class Table(object):
     """
-    Abstract entity representing a collection of data
+    Abstract entity representing a collection of data.
+
+    Signals:
+
+    on_insert:
+        Signal on insert an item in the table (with error or not).
+        Usage:
+        table_object.on_insert.register(self._callback_method)
+
+    on_insert_error:
+        Signal when an error happens on insert.
+        Usage:
+        table_object.on_insert_error.register(self._callback_method)
     """
 
     __metaclass__ = ABCMeta
@@ -32,7 +45,12 @@ class Table(object):
         self._database = database
         self._content_gen = content_gen
         self.show_errors = False
+
+        # Signal on insert an item (with error or not)
         self.on_insert = Signal()
+
+        # Signal when an error happens on insert
+        self.on_insert_error = Signal()
 
     def fill(self, n=10):
         c = self.get_cursor()
@@ -43,6 +61,7 @@ class Table(object):
                 self.on_insert()
                 c.execute(sql, self._get_random_params())
             except Exception, e:
+                self.on_insert_error(e)
                 if self.show_errors:
                     print "Exception: {0}".format(e)
 
@@ -128,6 +147,7 @@ class DataBase(object):
         self._filter_args = None
         self.on_change_table = Signal()
         self.on_insert = Signal()
+        self.on_insert_error = Signal()
 
     def fill(self, *args, **kargs):
         c = self.get_cursor()
@@ -136,14 +156,18 @@ class DataBase(object):
             table = self._table_cls(self, table, self._content_gen)
             table.show_errors = self.show_errors
             table.on_insert.register(self._on_insert_callback)
+            table.on_insert_error.register(self._on_insert_error_callback)
             self.on_change_table(table.table_info)
             table.fill(*args, **kargs)
 
         self.commit()
         c.close()
 
-    def _on_insert_callback(self):
-        self.on_insert()
+    def _on_insert_callback(self, *args, **kargs):
+        self.on_insert(*args, **kargs)
+
+    def _on_insert_error_callback(self, *args, **kargs):
+        self.on_insert_error(*args, **kargs)
 
     def get_tables(self):
         c = self.get_cursor()
