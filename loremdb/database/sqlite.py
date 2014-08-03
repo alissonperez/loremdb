@@ -3,6 +3,10 @@ import core
 
 class Table(core.Table):
 
+    def __init__(self, *args, **kargs):
+        super(Table, self).__init__(*args, **kargs)
+        self.__fields = None
+
     def _create_insert_sql(self):
         field_names = [i.get_name() for i in self._get_fields()]
 
@@ -12,7 +16,7 @@ class Table(core.Table):
         )
 
     def _get_fields(self):
-        if hasattr(self, "fields"):
+        if self.__fields is not None:
             return self.__fields
 
         c = self.get_cursor()
@@ -21,16 +25,58 @@ class Table(core.Table):
 
         sql = "PRAGMA table_info({0})".format(self.name)
         for (num, name, f_type, _, _, _) in c.execute(sql):
-            if f_type == "integer":
+            f_type = f_type.lower()
+            type = TypeAffinity
+            if TypeAffinity(f_type).type in ["integer", "numeric"]:
                 field = IntegerField(name, 0, 9999)
-            elif f_type == "text":
+            elif TypeAffinity(f_type).type == "text":
                 field = TextField(name, 255)
+            elif TypeAffinity(f_type).type == "real":
+                field = RealField(name)
+            elif TypeAffinity(f_type).type == "none":
+                field = NoneField(name, 255)
             else:
                 raise Exception("Unexpected column type '{0}'".format(f_type))
 
             self.__fields.append(field)
 
         return self.__fields
+
+
+class TypeAffinity(object):
+    """
+    Implementation of rules in SQLite's affinity specification:
+    See more in http://www.sqlite.org/datatype3.html#affname
+
+    Examples:
+    TypeAffinity("BIGINT").type == "integer"
+    TypeAffinity("VARCHAR").type == "text"
+    ...
+    """
+
+    def __init__(self, typename):
+        self.typename = typename
+
+    @property
+    def type(self):
+        if "int" in self.typename.lower():
+            return "integer"
+
+        for type in ["char", "clob", "text"]:
+            if type in self.typename.lower():
+                return "text"
+
+        for type in ["real", "floa", "doub"]:
+            if type in self.typename.lower():
+                return "real"
+
+        if "blob" in self.typename.lower():
+            return "none"
+
+        if self.typename.lower() == "":
+            return "none"
+
+        return "numeric"
 
 
 class IntegerField(core.Field):
@@ -50,6 +96,26 @@ class TextField(core.Field):
 
     def _get_random_value(self):
         return self.content_gen.get_text(self.length)
+
+
+class NoneField(TextField):
+    pass
+
+
+class BlobField(TextField):
+    pass
+
+
+class RealField(core.Field):
+    _range = 99999
+
+    def _get_random_value(self):
+        return float(
+            "{0}.{1}".format(
+                self.content_gen.get_int(0, self._range),
+                self.content_gen.get_int(0, self._range)
+            )
+        )
 
 
 class DataBase(core.DataBase):

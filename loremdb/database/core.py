@@ -145,6 +145,7 @@ class DataBase(object):
         self._content_gen = content_gen
         self.show_errors = False
         self._filter_args = None
+
         self.on_change_table = Signal()
         self.on_insert = Signal()
         self.on_insert_error = Signal()
@@ -179,7 +180,17 @@ class DataBase(object):
 
         c.close()
 
-        return tables
+        if self._filter_args is None:
+            return tables
+
+        # Check if filters are valid
+        diff_tables = list(set(self._filter_args) - set(tables))
+        if len(diff_tables) > 0:
+            raise Exception(
+                "Unespected filters: " + ", ".join(diff_tables)
+            )
+
+        return self._filter_args
 
     def get_cursor(self):
         return self.get_conn().cursor()

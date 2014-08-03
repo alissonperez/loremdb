@@ -101,6 +101,22 @@ class DbmsHandle(object):
         print "LoremDb v" + version
         print "------------------------------------"
 
+    def _execute(self):
+        """
+        Execute the program
+        """
+        db = self._create_database()
+
+        # Adding main 'slots'
+        db.on_change_table.register(self._current_table_changed)
+        db.on_insert.register(self._insert_received)
+        db.on_insert_error.register(self._insert_error_received)
+
+        if self.options.filter is not None:
+            db.filter(*self.options.filter)
+
+        db.fill(self.options.number)
+
     def _current_table_changed(self, table_info):
         print ""
         print "Populating '{}'".format(table_info["name"])
@@ -120,7 +136,7 @@ class DbmsHandle(object):
         print ""
         print "------------------------------------"
         print "Inserts: {}".format(self.counters["inserts"])
-        print "Inserts with errors: {}".format(self.counters["insert_errors"])
+        print "Inserts with error: {}".format(self.counters["insert_errors"])
         print "Inserts with success: {}".format(
             self.counters["inserts"] - self.counters["insert_errors"]
         )
@@ -135,9 +151,9 @@ class DbmsHandle(object):
         return NotImplemented
 
     @abstractmethod
-    def _execute(self):
+    def _create_database(self):
         """
-        Execute the program
+        Create a database object.
         """
         return NotImplemented
 
@@ -151,39 +167,33 @@ class MysqlDbmsHandle(DbmsHandle):
         if self.options.user is None:
             raise ArgumentError("Parameter '-u|--user' (User) is required.")
 
-    def _execute(self):
-        params = self._get_params()
-        params["content_gen"] = ContentGen()
-
-        from database import mysql
-        db = mysql.DataBase(**params)
-
-        # Adding main 'slots'
-        db.on_change_table.register(self._current_table_changed)
-        db.on_insert.register(self._insert_received)
-        db.on_insert_error.register(self._insert_error_received)
-
-        if self.options.filter is not None:
-            db.filter(*self.options.filter)
-
-        db.fill(self.options.number)
-
-    def _get_params(self):
+    def _create_database(self):
         params = {
             "user": self.options.user,
             "password": self.options.password,
             "database": self.options.database,
             "host": self.options.host,
             "port": self.options.port,
+            "content_gen": ContentGen()
         }
 
         # Remove None values
-        return {k: v for k, v in params.iteritems() if v is not None}
+        params = {k: v for k, v in params.iteritems() if v is not None}
+
+        from database import mysql
+        return mysql.DataBase(**params)
 
 
-# @todo
-class SqliteDbmsHandle(object):
-    pass
+class SqliteDbmsHandle(DbmsHandle):
+    def _validate_args(self):
+        if self.options.database is None:
+            raise ArgumentError("Parameter '--db' (Database) is required.")
+
+    def _create_database(self):
+        from database import sqlite
+        return sqlite.DataBase(
+            content_gen=ContentGen(),
+            name=self.options.database)
 
 
 class Signal(object):
