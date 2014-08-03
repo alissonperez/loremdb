@@ -8,6 +8,7 @@ class Table(core.Table):
     def __init__(self, *args, **kargs):
         super(Table, self).__init__(*args, **kargs)
         self.field_creator = FieldCreatorFromMysql()
+        self.__fields = None
 
     def _create_insert_sql(self):
         fields_num = len(self._get_fields())
@@ -18,7 +19,7 @@ class Table(core.Table):
         )
 
     def _get_fields(self):
-        if hasattr(self, "fields"):
+        if self.__fields is not None:
             return self.__fields
 
         c = self.get_cursor()
@@ -85,6 +86,7 @@ class FieldCreatorFromMysql(object):
             "precision": precision,
             "scale": scale,
             "options": options,
+            "nullable": specs["is_nullable"].lower() == "yes",
         }
 
     def _get_field_class(self, data_type):
@@ -100,7 +102,7 @@ class IntegerField(core.Field):
         super(IntegerField, self).__init__(name, *args, **kargs)
         self.unsigned = unsigned
 
-    def get_random_value(self):
+    def _get_random_value(self):
         if self.unsigned:
             return self.content_gen.get_int(0, self.num_signed_max * 2)
 
@@ -139,7 +141,7 @@ class DecimalField(core.Field):
         self.precision = precision
         self.scale = scale
 
-    def get_random_value(self):
+    def _get_random_value(self):
         int_range = 10 ** (self.precision - self.scale) - 1
         int_rand = self.content_gen.get_int(-1 * int_range, int_range)
         decimal_range = 10 ** self.scale - 1
@@ -167,22 +169,22 @@ class NumericField(DecimalField):
 
 
 class DateField(core.Field):
-    def get_random_value(self):
+    def _get_random_value(self):
         return self.content_gen.get_date()
 
 
 class DatetimeField(core.Field):
-    def get_random_value(self):
+    def _get_random_value(self):
         return self.content_gen.get_datetime()
 
 
 class TimestampField(core.Field):
-    def get_random_value(self):
+    def _get_random_value(self):
         return 126144000 + self.content_gen.get_int(0, 315360000)
 
 
 class TimeField(core.Field):
-    def get_random_value(self):
+    def _get_random_value(self):
         return '{0}:{1}:{2}'.format(
             self.content_gen.get_int(0, 23),
             self.content_gen.get_int(0, 59),
@@ -191,7 +193,7 @@ class TimeField(core.Field):
 
 
 class YearField(core.Field):
-    def get_random_value(self):
+    def _get_random_value(self):
         return self.content_gen.get_int(1990, 2020)
 
 
@@ -200,7 +202,7 @@ class CharField(core.Field):
         super(CharField, self).__init__(name, *args, **kargs)
         self.length = length
 
-    def get_random_value(self):
+    def _get_random_value(self):
         return self.content_gen.get_text(self.length)
 
 
@@ -225,7 +227,7 @@ class EnumField(core.Field):
         super(EnumField, self).__init__(name, *args, **kargs)
         self.options = options
 
-    def get_random_value(self):
+    def _get_random_value(self):
         return self.content_gen.get_in_list(self.options)
 
     @classmethod
@@ -244,7 +246,7 @@ class EnumField(core.Field):
 
 
 class SetField(EnumField):
-    def get_random_value(self):
+    def _get_random_value(self):
         options = self.content_gen.get_list_subset(self.options)
         return ",".join(sorted(options))
 

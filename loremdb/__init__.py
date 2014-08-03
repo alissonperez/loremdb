@@ -6,6 +6,10 @@ import argparse
 version = "0.0.2"   # Application version
 
 
+class ArgumentError(Exception):
+    pass
+
+
 class LoremDb(object):
 
     def __init__(self):
@@ -44,7 +48,7 @@ class LoremDb(object):
             "--version", action="version", version="%(prog)s "+version)
 
         self._parser.add_argument(
-            "--filter", dest="table", nargs="+",
+            "--filter", dest="filter", nargs="+",
             help=("Filter to populate specific tables in "
                   "the database; Separate tables with spaces ' '"))
 
@@ -59,12 +63,12 @@ class LoremDb(object):
         try:
             self._validate_args()
             self._dbms_handles[self.options.dbms](self.options).execute()
-        except Exception, e:
+        except ArgumentError, e:
             self._parser.error(e.message)
 
     def _validate_args(self):
         if self.options.dbms is None:
-            raise Exception("Parameter '-d' (DBMS) is required.")
+            raise ArgumentError("Parameter '-d' (DBMS) is required.")
 
 
 class DbmsHandle(object):
@@ -99,7 +103,7 @@ class DbmsHandle(object):
 
     def _show_ending(self):
         print ""
-        print " ... Finished"
+        print "... Finished"
         print ""
 
     @abstractmethod
@@ -121,10 +125,10 @@ class MysqlDbmsHandle(DbmsHandle):
 
     def _validate_args(self):
         if self.options.database is None:
-            raise Exception("Parameter '--db' (Database) is required.")
+            raise ArgumentError("Parameter '--db' (Database) is required.")
 
         if self.options.user is None:
-            raise Exception("Parameter '-u|--user' (User) is required.")
+            raise ArgumentError("Parameter '-u|--user' (User) is required.")
 
     def _execute(self):
         params = self._get_params()

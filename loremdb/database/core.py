@@ -95,14 +95,21 @@ class Field(object):
 
     content_gen = None  # Instance of conntent generator
 
-    def __init__(self, name, *args, **kargs):
+    def __init__(self, name, nullable=False, *args, **kargs):
         self.name = name
+        self.nullable = nullable
 
     def get_name(self):
         return self.name
 
-    @abstractmethod
     def get_random_value(self):
+        if self.nullable and self.content_gen.get_int(0, 4) == 1:
+            return None
+
+        return self._get_random_value()
+
+    @abstractmethod
+    def _get_random_value(self):
         return NotImplemented
 
 

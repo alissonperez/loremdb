@@ -39,7 +39,7 @@ class IntegerField(core.Field):
         self.min = min
         self.max = max
 
-    def get_random_value(self):
+    def _get_random_value(self):
         return self.content_gen.get_int(self.min, self.max)
 
 
@@ -48,7 +48,7 @@ class TextField(core.Field):
         super(TextField, self).__init__(name)
         self.length = length
 
-    def get_random_value(self):
+    def _get_random_value(self):
         return self.content_gen.get_text(self.length)
 
 
