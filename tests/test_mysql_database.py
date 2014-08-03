@@ -123,13 +123,13 @@ class TestTable(DataBaseTestCase):
     def test_fill(self):
         c = self.table.get_cursor()
 
-        c.execute("SELECT name, age from users")
+        c.execute("SELECT * from users")
         self.assertEquals(0, len(c.fetchall()))
 
         self.table.fill(n=10)
         self.database.commit()
 
-        c.execute("SELECT name, age from users")
+        c.execute("SELECT * from users")
         self.assertEquals(10, len(c.fetchall()))
 
     def test_signal(self):
