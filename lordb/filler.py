@@ -1,2 +1,0 @@
-class Filler:
-    pass

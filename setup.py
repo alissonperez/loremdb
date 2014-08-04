@@ -1,41 +1,34 @@
 from distutils.core import setup
-from distutils.core import Command
+import os
+from loremdb import version
 
+# Compile a list of packages available
+packages = []
+for dirpath, dirnames, filenames in os.walk("loremdb"):
+    if "__pycache__" in dirpath:
+        continue
 
-def discover_and_run_tests():
-    import unittest
-    import os
+    packages.append(dirpath.replace("/", "."))
 
-    project_dir = os.path.dirname(os.path.realpath(__file__))
+packages = set(packages)
 
-    test_loader = unittest.defaultTestLoader
-    test_suite = test_loader.discover("{0}/tests/".format(project_dir))
-
-    unittest.TextTestRunner().run(test_suite)
-
-
-class DiscoverTest(Command):
-    description = "Discover and run all tests"
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        discover_and_run_tests()
-
+cmdclass = {}
+try:
+    # Include additional command to run tests in develop env
+    from tests import DiscoverTest
+    cmdclass = {"test": DiscoverTest}
+except Exception, e:
+    pass
 
 setup(
-    name="LorDB",
-    version="0.0.1",
+    name="LoremDB",
+    version=version,
     author="Alisson R. Perez",
     author_email="alissonperez@gmail.com",
     # @todo - Update with our PyPI package page
     url="https://pypi.python.org/pypi",
-    packages=["lordb"],
+    packages=packages,
+    scripts=["bin/loremdb"],
     classifiers=[
         "Programming Language :: Python",
         "Programming Language :: Python :: 2.7",
@@ -45,6 +38,6 @@ setup(
         "Intended Audience :: Developers",
         "Topic :: Database",
     ],
-    cmdclass={"test": DiscoverTest}
+    cmdclass=cmdclass
     # @todo - Include: "description" and "long_description"
 )
