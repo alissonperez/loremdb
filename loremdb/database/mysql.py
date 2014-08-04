@@ -87,6 +87,7 @@ class FieldCreatorFromMysql(object):
             "scale": scale,
             "options": options,
             "nullable": specs["is_nullable"].lower() == "yes",
+            "default": specs["column_default"],
         }
 
     def _get_field_class(self, data_type):

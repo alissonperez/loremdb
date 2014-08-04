@@ -114,9 +114,10 @@ class Field(object):
 
     content_gen = None  # Instance of conntent generator
 
-    def __init__(self, name, nullable=False, *args, **kargs):
+    def __init__(self, name, nullable=False, default=None, *args, **kargs):
         self.name = name
         self.nullable = nullable
+        self.default = None
 
     def get_name(self):
         return self.name
@@ -124,6 +125,9 @@ class Field(object):
     def get_random_value(self):
         if self.nullable and self.content_gen.get_int(0, 4) == 1:
             return None
+
+        if self.default is not None and self.content_gen.get_int(0, 4) == 1:
+            return self.default
 
         return self._get_random_value()
 

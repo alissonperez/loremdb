@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 import sys
 import argparse
 
-version = "0.0.2"   # Application version
+version = "0.1.0"   # Application version
 
 
 class ArgumentError(Exception):
