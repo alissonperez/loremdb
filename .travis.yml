@@ -8,6 +8,9 @@ before_script:
 # command to install dependencies
 install:
   - pip install mysql-connector-python==1.1.6 --allow-external mysql-connector-python --upgrade
+  - pip install coverage --upgrade
 
 # command to run tests
-script: python setup.py test
+script: coverage setup.py test
+
+after_success: coveralls
