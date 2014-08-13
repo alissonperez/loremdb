@@ -1,5 +1,5 @@
 import unittest
-import loremdb.cmd
+import loremdb.cmdline
 from os import linesep
 
 
@@ -9,7 +9,7 @@ class testOutputProgress(unittest.TestCase):
 
     def setUp(self):
         self.output = []
-        self.obj = loremdb.cmd.OutputProgress(500, self.callback)
+        self.obj = loremdb.cmdline.OutputProgress(500, self.callback)
 
     def callback(self, to_print):
         self.output.append(to_print)
