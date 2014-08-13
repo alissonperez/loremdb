@@ -1,9 +1,9 @@
-from util import ContentGen, OutputProgress
+from util import ContentGen
 from abc import ABCMeta, abstractmethod
+from common import version
+from os import linesep
 import sys
 import argparse
-
-version = "0.1.0"   # Application version
 
 
 class ArgumentError(Exception):
@@ -98,7 +98,9 @@ class DbmsHandle(object):
         self._show_ending()
 
     def _show_intro(self):
-        print "LoremDb v" + version
+        print ("LoremDb v{}"
+               " by Alisson R. Perez"
+               "<alissonperez@outlook.com>".format(version))
         print "------------------------------------"
 
     def _execute(self):
@@ -185,6 +187,7 @@ class MysqlDbmsHandle(DbmsHandle):
 
 
 class SqliteDbmsHandle(DbmsHandle):
+
     def _validate_args(self):
         if self.options.database is None:
             raise ArgumentError("Parameter '--db' (Database) is required.")
@@ -196,22 +199,66 @@ class SqliteDbmsHandle(DbmsHandle):
             name=self.options.database)
 
 
-class Signal(object):
+class OutputProgress(object):
+    """
+    Show progress acording with a size (param progress_size)
+    Ex:
+    o = OutputProgress(100, sys.stdout.write) # All dots will be
+    # written in the screen.
 
-    def __init__(self):
-        self._slots = {}
+    o() # This will print (using sys.stdout.write) a dots
+    # quantity related with 100.
 
-    def __call__(self, *args, **kwargs):
-        for key, func in self._slots.iteritems():
-            func.im_func(func.im_self, *args, **kwargs)
+    # OBS: Raise an StandardError if number of calls exceed
+    # progress_size parameter.
+    """
 
-    def register(self, slot):
-        self._slots[self._get_key(slot)] = slot
+    line_size = 50
+    lines = 10
 
-    def unregister(self, slot):
-        key = self._get_key(slot)
-        if key in self._slots:
-            del self._slots[key]
+    # Number of calls and actual dots, respectively.
+    _calls_counter = 0
+    _actual_dots = 0
 
-    def _get_key(self, slot):
-        return (slot.im_func, id(slot.im_self))
+    def __init__(self, progress_size, callback):
+        self.progress_size = progress_size
+        self._callback = callback
+
+    def reset(self):
+        self._calls_counter = 0
+        self._actual_dots = 0
+
+    def __call__(self):
+        # The number of calls does'n exceed progres_size
+        if self._calls_counter + 1 > self.progress_size:
+            raise StandardError("Number of calls exhausted")
+
+        self._calls_counter += 1
+        self._print_dots()
+
+    def _print_dots(self):
+        total_dots = self.line_size * self.lines
+        new_dots = int(self._calls_counter * total_dots / self.progress_size)
+
+        self._call_callback(new_dots - self._actual_dots)
+
+        self._actual_dots = new_dots
+
+    def _call_callback(self, diff):
+        old_line = int(self._actual_dots / self.line_size)
+
+        for c in range(1, diff+1):
+            self._callback(".")
+
+            # Show percent
+            act_line = int((self._actual_dots + c) / self.line_size)
+            if act_line > old_line:
+                self._show_percent(self._actual_dots + c)
+                old_line = act_line
+
+    def _show_percent(self, dots):
+        self._callback(
+            " %.0f%%" % (float(dots) / (self.line_size * self.lines) * 100)
+        )
+
+        self._callback(linesep)

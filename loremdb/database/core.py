@@ -1,6 +1,6 @@
 import random
 from loremdb.util import ContentGen
-from loremdb import Signal
+from loremdb.common import Signal
 from abc import ABCMeta, abstractmethod
 
 
