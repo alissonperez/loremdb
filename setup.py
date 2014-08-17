@@ -1,6 +1,6 @@
 from distutils.core import setup
 import os
-from loremdb import version
+from loremdb.common import version
 
 # Compile a list of packages available
 packages = []
