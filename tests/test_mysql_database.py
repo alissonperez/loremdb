@@ -1,5 +1,4 @@
 import unittest
-from loremdb.database.core import DataBaseCreator
 from loremdb.database import mysql
 from loremdb.util import ContentGen
 from random import Random
@@ -17,7 +16,7 @@ class DataBaseTestCase(unittest.TestCase):
         self.database.commit()
 
     def get_database(self):
-        return DataBaseCreator().create_mysql(
+        return mysql.DataBase(
             ContentGen(),
             user="root",
             database="loremdb_test"

@@ -1,6 +1,5 @@
 import unittest
-from loremdb.database.core import DataBaseCreator
-from loremdb.database.sqlite import Table, TypeAffinity
+from loremdb.database.sqlite import Table, TypeAffinity, DataBase
 from loremdb.util import ContentGen
 import sqlite3
 
@@ -74,7 +73,7 @@ class SqliteDataBaseTestCase(unittest.TestCase):
 
     def setUp(self):
         self.create_tables()
-        self._database = DataBaseCreator().create_sqlite(
+        self._database = DataBase(
             content_gen=ContentGen(),
             name=self.database_name
         )

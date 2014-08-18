@@ -4,23 +4,6 @@ from loremdb.common import Signal
 from abc import ABCMeta, abstractmethod
 
 
-class DataBaseCreator(object):
-    """
-    Factory to create databases
-    @todo   Remove this class, it's not used in anywhere
-    """
-
-    def create_sqlite(
-            self, content_gen, name, *args, **kargs):
-        from sqlite import DataBase as _DataBase
-        return _DataBase(content_gen, name, *args, **kargs)
-
-    def create_mysql(
-            self, content_gen, user, database, *args, **kargs):
-        from mysql import DataBase as _DataBase
-        return _DataBase(content_gen, user, database, *args, **kargs)
-
-
 class Table(object):
     """
     Abstract entity representing a collection of data.
