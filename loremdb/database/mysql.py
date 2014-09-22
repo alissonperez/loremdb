@@ -54,6 +54,10 @@ class Table(core.Table):
 
         return self.__fields
 
+    # @todo NotImplemented
+    def get_relations(self):
+        return []
+
 
 class FieldCreatorFromMysql(object):
     def create(self, mysql_specs):

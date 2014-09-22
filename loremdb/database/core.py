@@ -1,24 +1,7 @@
-import random
 from loremdb.util import ContentGen
 from loremdb.common import Signal
 from abc import ABCMeta, abstractmethod
-
-
-class DataBaseCreator(object):
-    """
-    Factory to create databases
-    @todo   Remove this class, it's not used in anywhere
-    """
-
-    def create_sqlite(
-            self, content_gen, name, *args, **kargs):
-        from sqlite import DataBase as _DataBase
-        return _DataBase(content_gen, name, *args, **kargs)
-
-    def create_mysql(
-            self, content_gen, user, database, *args, **kargs):
-        from mysql import DataBase as _DataBase
-        return _DataBase(content_gen, user, database, *args, **kargs)
+import random
 
 
 class Table(object):
@@ -51,6 +34,20 @@ class Table(object):
 
         # Signal when an error happens on insert
         self.on_insert_error = Signal()
+
+    def get_related_tables(self):
+        tables = []
+        for relation in self.get_relations():
+            tables.append(relation["ref_table"])
+
+        return tables
+
+    @abstractmethod
+    def get_relations(self):
+        """
+        Return relations with other tables
+        """
+        return NotImplemented
 
     def fill(self, n=10):
         c = self.get_cursor()
@@ -105,6 +102,58 @@ class Table(object):
         return NotImplemented
 
 
+class TableKeySorterByRelation(object):
+    """
+    Sort a table by its related tables.
+
+    If TABLE1 has a FK with TABLE2 then TABLE2 appear before TABLE1
+    with this sorter.
+
+    Use/Example:
+
+    PERMISSIONS has a relation with USERS
+    PERMISSIONS_ROLES has a relation with PERMISSIONS
+
+    tables = [
+        sqlite.Table(database_instance, "permissions_roles", ContentGen()),
+        sqlite.Table(database_instance, "permissions", ContentGen()),
+        sqlite.Table(database_instance, "users", ContentGen()),
+    ]
+
+    tables_sorted = sorted(tables, key=TableSorterByRelation)
+
+    Result (tables_sorted):
+    [
+        sqlite.Table(database_instance, "users", ContentGen()),
+        sqlite.Table(database_instance, "permissions", ContentGen()),
+        sqlite.Table(database_instance, "permissions_roles", ContentGen()),
+    ]
+    """
+
+    def __init__(self, tb):
+            self.tb = tb
+
+    def __lt__(self, other):
+        return self.tb.name in other.tb.get_related_tables()
+
+    def __gt__(self, other):
+        return other.tb.name in self.tb.get_related_tables()
+
+    def __eq__(self, other):
+        return self.tb.name == other.tb.name
+
+    def __le__(self, other):
+        return (self.tb.name == other.tb.name
+                or self.tb.name in other.tb.get_related_tables())
+
+    def __ge__(self, other):
+        return (self.tb.name == other.tb.name
+                or other.tb.name in self.tb.get_related_tables())
+
+    def __ne__(self, other):
+        return self.tb.name != other.tb.name
+
+
 class Field(object):
     """
     Abstract entity representing a field in the Database
@@ -157,8 +206,13 @@ class DataBase(object):
     def fill(self, *args, **kargs):
         c = self.get_cursor()
 
+        tables = []
+
+        # First, create a table object
         for table in self.get_tables():
-            table = self._table_cls(self, table, self._content_gen)
+            tables.append(self._table_cls(self, table, self._content_gen))
+
+        for table in sorted(tables, key=TableKeySorterByRelation):
             table.show_errors = self.show_errors
             table.on_insert.register(self._on_insert_callback)
             table.on_insert_error.register(self._on_insert_error_callback)
@@ -174,6 +228,8 @@ class DataBase(object):
     def _on_insert_error_callback(self, *args, **kargs):
         self.on_insert_error(*args, **kargs)
 
+    # @todo - Change it to return an array of table instances, not an array
+    # of string names.
     def get_tables(self):
         c = self.get_cursor()
         tables = []

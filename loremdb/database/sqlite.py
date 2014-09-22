@@ -1,4 +1,5 @@
 import core
+import re
 
 
 class Table(core.Table):
@@ -41,6 +42,40 @@ class Table(core.Table):
             self.__fields.append(field)
 
         return self.__fields
+
+    def get_relations(self):
+        c = self.get_cursor()
+
+        relations = []
+
+        sql = "SELECT sql FROM sqlite_master WHERE name = ?"
+        c.execute(sql, (self.name,))
+
+        sql = c.fetchone()[0]
+
+        # @todo - Change this to use
+        # "PRAGMA foreign_key_list(table-name);" statement
+        return self._parse_relations(sql)
+
+    def _parse_relations(self, sql):
+        pattern = r".*FOREIGN KEY \((.*?)\).*?REFERENCES (.*?)\((.*?)\).*"
+
+        relations = []
+        for line in sql.splitlines(True):
+            result = re.match(pattern, line)
+
+            if result is not None:
+                relation = {
+                    "ref_table": result.group(2).strip(),
+                    "columns": [
+                        c.strip() for c in result.group(1).split(",")],
+                    "ref_columns": [
+                        c.strip() for c in result.group(3).split(",")],
+                }
+
+                relations.append(relation)
+
+        return relations
 
 
 class TypeAffinity(object):

@@ -1,24 +1,36 @@
 from distutils.core import setup
-import os
 from loremdb.common import version
+import os
 
-# Compile a list of packages available
-packages = []
-for dirpath, dirnames, filenames in os.walk("loremdb"):
-    if "__pycache__" in dirpath:
-        continue
 
-    packages.append(dirpath.replace("/", "."))
+def get_cmdclass():
+    """
+    Return the command class parameter
+    """
 
-packages = set(packages)
+    try:
+        # Include additional command to run tests in develop env
+        from tests import DiscoverTest
+        return {"test": DiscoverTest}
+    except Exception, e:
+        pass
 
-cmdclass = {}
-try:
-    # Include additional command to run tests in develop env
-    from tests import DiscoverTest
-    cmdclass = {"test": DiscoverTest}
-except Exception, e:
-    pass
+    return {}
+
+
+def get_packages():
+    """
+    Compile and return a list of packages available
+    """
+
+    packages = []
+    for dirpath, dirnames, filenames in os.walk("loremdb"):
+        if "__pycache__" in dirpath:
+            continue
+
+        packages.append(dirpath.replace("/", "."))
+
+    return set(packages)
 
 setup(
     name="LoremDB",
@@ -27,7 +39,7 @@ setup(
     author_email="alissonperez@gmail.com",
     # @todo - Update with our PyPI package page
     url="https://pypi.python.org/pypi",
-    packages=packages,
+    packages=get_packages(),
     scripts=["bin/loremdb"],
     classifiers=[
         "Programming Language :: Python",
@@ -38,6 +50,6 @@ setup(
         "Intended Audience :: Developers",
         "Topic :: Database",
     ],
-    cmdclass=cmdclass
+    cmdclass=get_cmdclass()
     # @todo - Include: "description" and "long_description"
 )

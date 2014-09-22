@@ -1,7 +1,7 @@
 import unittest
-from loremdb.database.core import DataBaseCreator
-from loremdb.database.sqlite import Table, TypeAffinity
 from loremdb.util import ContentGen
+from loremdb.database import sqlite
+from loremdb.database.core import TableKeySorterByRelation
 import sqlite3
 
 
@@ -66,7 +66,7 @@ class TypeAffinityTestCase(unittest.TestCase):
             self._test_type_affinity(espected, type_desc)
 
     def _test_type_affinity(self, espected, type_desc):
-        self.assertEquals(espected, TypeAffinity(type_desc).type)
+        self.assertEquals(espected, sqlite.TypeAffinity(type_desc).type)
 
 
 class SqliteDataBaseTestCase(unittest.TestCase):
@@ -74,10 +74,7 @@ class SqliteDataBaseTestCase(unittest.TestCase):
 
     def setUp(self):
         self.create_tables()
-        self._database = DataBaseCreator().create_sqlite(
-            content_gen=ContentGen(),
-            name=self.database_name
-        )
+        self._database = sqlite.DataBase(ContentGen(), self.database_name)
 
     def create_tables(self):
         self.conn = sqlite3.connect(self.database_name)
@@ -86,6 +83,7 @@ class SqliteDataBaseTestCase(unittest.TestCase):
 
         c.execute("drop table if exists users")
         c.execute("drop table if exists permissions")
+        c.execute("drop table if exists permissions_roles")
 
         c.execute("""CREATE TABLE IF NOT EXISTS users (
             user_id integer PRIMARY KEY,
@@ -95,15 +93,19 @@ class SqliteDataBaseTestCase(unittest.TestCase):
             height real,
             creation_date date,
             profile_image blob,
-            document UNSIGNED BIG INT
-        )""")
+            document UNSIGNED BIG INT)""")
 
-        c.execute("""create table if not exists
-        permissions (
+        c.execute("""CREATE TABLE IF NOT EXISTS permissions (
             permission_id integer PRIMARY KEY,
             user_id integer,
-            action text
-        )""")
+            action text,
+            FOREIGN KEY (user_id) REFERENCES users(user_id))""")
+
+        c.execute("""CREATE TABLE IF NOT EXISTS permissions_roles (
+            permission_role_id integer PRIMARY KEY,
+            permission_id integer,
+            role_id integer,
+            FOREIGN KEY (permission_id) REFERENCES permissions(permission_id))""")
 
         self.conn.commit()
 
@@ -131,16 +133,17 @@ class TestDataBase(SqliteDataBaseTestCase):
     def test_get_tables(self):
         tables = self._database.get_tables()
 
-        self.assertEquals(2, len(tables))
+        self.assertEquals(3, len(tables))
 
         self.assertTrue("users" in tables)
         self.assertTrue("permissions" in tables)
+        self.assertTrue("permissions_roles" in tables)
 
 
 class TestTable(SqliteDataBaseTestCase):
     def setUp(self):
         super(TestTable, self).setUp()
-        self.table = Table(self._database, "users", ContentGen())
+        self.table = sqlite.Table(self._database, "users", ContentGen())
 
     def test_fill(self):
         c = self._database.get_cursor()
@@ -153,3 +156,29 @@ class TestTable(SqliteDataBaseTestCase):
 
         results = c.execute("SELECT name, age from users")
         self.assertEquals(10, len(results.fetchall()))
+
+    def test_get_relations(self):
+        self.table = sqlite.Table(self._database, "permissions", ContentGen())
+
+        test_relations = [{"columns": ["user_id"],
+                           "ref_table": "users",
+                           "ref_columns": ["user_id"]}]
+
+        self.assertEquals(test_relations, self.table.get_relations())
+
+    def test_get_related_tables(self):
+        self.table = sqlite.Table(self._database, "permissions", ContentGen())
+        self.assertEquals(["users"], self.table.get_related_tables())
+
+    def test_sorter(self):
+        tables = [
+            sqlite.Table(self._database, "permissions_roles", ContentGen()),
+            sqlite.Table(self._database, "permissions", ContentGen()),
+            sqlite.Table(self._database, "users", ContentGen()),
+        ]
+
+        tables_sorted = sorted(tables, key=TableKeySorterByRelation)
+
+        self.assertEquals("users", tables_sorted[0].name)
+        self.assertEquals("permissions", tables_sorted[1].name)
+        self.assertEquals("permissions_roles", tables_sorted[2].name)
